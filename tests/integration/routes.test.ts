@@ -90,11 +90,34 @@ describe("GET /api/bike/stations", () => {
 });
 
 describe("GET /api/route/compare", () => {
-  it("returns 501 placeholder until P5~P7", async () => {
-    const res = await getCompare();
-    expect(res.status).toBe(501);
-    const body = (await res.json()) as { error: string };
-    expect(body.error).toBe("not_implemented");
+  beforeEach(() => {
+    cacheClear();
+    delete process.env.ODSAY_KEY;
+  });
+
+  const compareReq = (qs: string) =>
+    new Request(`http://localhost/api/route/compare${qs}`);
+
+  it("returns 400 when any coordinate is missing", async () => {
+    const res = await getCompare(compareReq("?startX=126.9779"));
+    expect(res.status).toBe(400);
+  });
+
+  it("returns a bus route and bike=null from the fixture path", async () => {
+    const res = await getCompare(
+      compareReq(
+        "?startX=126.9779&startY=37.5663&endX=127.0276&endY=37.4979",
+      ),
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      bus: { mode: string; totalDurationSec: number; polyline: unknown[] };
+      bike: unknown;
+    };
+    expect(body.bike).toBeNull();
+    expect(body.bus.mode).toBe("bus");
+    expect(body.bus.totalDurationSec).toBeGreaterThan(0);
+    expect(body.bus.polyline.length).toBeGreaterThan(0);
   });
 });
 

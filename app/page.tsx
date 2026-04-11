@@ -4,6 +4,7 @@ import {
   LocationStatusBadge,
 } from "@/components/location/LocationGate";
 import { SearchBar } from "@/components/search/SearchBar";
+import { CompareSheet } from "@/components/compare/CompareSheet";
 
 export default function Home() {
   return (
@@ -23,6 +24,10 @@ export default function Home() {
         </div>
         <SearchBar />
         <LocationStatusBadge />
+      </div>
+
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex flex-col items-center p-4 pb-6">
+        <CompareSheet />
       </div>
     </main>
   );

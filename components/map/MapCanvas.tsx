@@ -2,7 +2,12 @@
 
 import type { ComponentProps } from "react";
 import { useEffect, useMemo, useRef } from "react";
-import { Map, MapMarker, useKakaoLoader } from "react-kakao-maps-sdk";
+import {
+  Map,
+  MapMarker,
+  Polyline,
+  useKakaoLoader,
+} from "react-kakao-maps-sdk";
 
 type MapOnCreate = NonNullable<ComponentProps<typeof Map>["onCreate"]>;
 type KakaoMapInstance = Parameters<MapOnCreate>[0];
@@ -27,8 +32,12 @@ export function MapCanvas({
   const origin = useTripStore((s) => s.origin);
   const destination = useTripStore((s) => s.destination);
   const pickMode = useTripStore((s) => s.pickMode);
+  const compare = useTripStore((s) => s.compare);
   const setOrigin = useTripStore((s) => s.setOrigin);
   const setPickMode = useTripStore((s) => s.setPickMode);
+
+  const busPolyline =
+    compare.status === "success" ? (compare.data.bus?.polyline ?? []) : [];
 
   const mapRef = useRef<KakaoMapInstance | null>(null);
 
@@ -131,6 +140,15 @@ export function MapCanvas({
             size: { width: 32, height: 40 },
             options: { offset: { x: 16, y: 40 } },
           }}
+        />
+      )}
+      {busPolyline.length > 1 && (
+        <Polyline
+          path={busPolyline}
+          strokeWeight={6}
+          strokeColor="#3b82f6"
+          strokeOpacity={0.9}
+          strokeStyle="solid"
         />
       )}
       {!origin && !destination && (
