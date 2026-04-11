@@ -1,0 +1,62 @@
+{
+  "result": {
+    "searchType": 0,
+    "outTrafficCheck": 0,
+    "path": [
+      {
+        "pathType": 2,
+        "info": {
+          "totalTime": 28,
+          "totalWalk": 410,
+          "totalDistance": 5200,
+          "busTransitCount": 1,
+          "subwayTransitCount": 0,
+          "totalTransitCount": 1,
+          "firstStartStation": "서울시청",
+          "lastEndStation": "강남역",
+          "payment": 1500
+        },
+        "subPath": [
+          {
+            "trafficType": 3,
+            "distance": 210,
+            "sectionTime": 3
+          },
+          {
+            "trafficType": 2,
+            "distance": 4700,
+            "sectionTime": 22,
+            "stationCount": 8,
+            "lane": [
+              { "busNo": "N16", "busID": 101300013 }
+            ],
+            "startName": "서울시청",
+            "endName": "강남역",
+            "startX": 126.9779,
+            "startY": 37.5663,
+            "endX": 127.0276,
+            "endY": 37.4979,
+            "passStopList": {
+              "stations": [
+                { "index": 0, "stationName": "서울시청", "x": "126.9779", "y": "37.5663" },
+                { "index": 1, "stationName": "을지로입구", "x": "126.9833", "y": "37.5661" },
+                { "index": 2, "stationName": "명동", "x": "126.9854", "y": "37.5636" },
+                { "index": 3, "stationName": "충무로", "x": "126.9942", "y": "37.5612" },
+                { "index": 4, "stationName": "동대입구", "x": "127.0053", "y": "37.5595" },
+                { "index": 5, "stationName": "약수", "x": "127.0111", "y": "37.5546" },
+                { "index": 6, "stationName": "한남", "x": "127.0104", "y": "37.5403" },
+                { "index": 7, "stationName": "신사", "x": "127.0205", "y": "37.5164" },
+                { "index": 8, "stationName": "강남역", "x": "127.0276", "y": "37.4979" }
+              ]
+            }
+          },
+          {
+            "trafficType": 3,
+            "distance": 290,
+            "sectionTime": 3
+          }
+        ]
+      }
+    ]
+  }
+}

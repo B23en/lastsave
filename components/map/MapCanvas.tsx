@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { Map, MapMarker, useKakaoLoader } from "react-kakao-maps-sdk";
 import type { Coord } from "@/types/trip";
 import { KAKAO_MAP_KEY, SEOUL_CITY_HALL } from "@/lib/config";
@@ -20,6 +21,16 @@ export function MapCanvas({
     libraries: ["services", "clusterer"],
   });
 
+  useEffect(() => {
+    if (error) {
+      console.error("[MapCanvas] Kakao SDK load failed", error);
+      console.info(
+        "[MapCanvas] 해결: 카카오 Developers → 내 앱 → 플랫폼 → Web 에 " +
+          "http://localhost:3000 이 등록되어 있는지 확인하세요.",
+      );
+    }
+  }, [error]);
+
   if (!KAKAO_MAP_KEY) {
     return (
       <FallbackCard
@@ -33,7 +44,10 @@ export function MapCanvas({
     return (
       <FallbackCard
         title="지도를 불러오지 못했습니다"
-        body="네트워크를 확인하거나 잠시 후 다시 시도해주세요."
+        body={
+          "브라우저 콘솔(F12) 메시지를 확인해주세요. 보통 카카오 Developers에서 " +
+          "Web 플랫폼 도메인에 http://localhost:3000 이 등록되지 않은 경우입니다."
+        }
       />
     );
   }

@@ -1,0 +1,53 @@
+{
+  "response": {
+    "header": {
+      "resultCode": "00",
+      "resultMsg": "NORMAL SERVICE."
+    },
+    "body": {
+      "items": {
+        "item": [
+          {
+            "stationId": "ST-00101",
+            "stationNm": "시청역 1번 출구",
+            "stationLatitude": "37.5648",
+            "stationLongitude": "126.9768",
+            "rackTotCnt": "20",
+            "parkingBikeTotCnt": "12",
+            "shared": "60"
+          },
+          {
+            "stationId": "ST-00102",
+            "stationNm": "시청역 3번 출구",
+            "stationLatitude": "37.5657",
+            "stationLongitude": "126.9775",
+            "rackTotCnt": "15",
+            "parkingBikeTotCnt": "4",
+            "shared": "27"
+          },
+          {
+            "stationId": "ST-00103",
+            "stationNm": "덕수궁 대한문 앞",
+            "stationLatitude": "37.5661",
+            "stationLongitude": "126.9754",
+            "rackTotCnt": "10",
+            "parkingBikeTotCnt": "0",
+            "shared": "0"
+          },
+          {
+            "stationId": "ST-00201",
+            "stationNm": "광화문역 7번 출구",
+            "stationLatitude": "37.5715",
+            "stationLongitude": "126.9766",
+            "rackTotCnt": "25",
+            "parkingBikeTotCnt": "18",
+            "shared": "72"
+          }
+        ]
+      },
+      "numOfRows": 10,
+      "pageNo": 1,
+      "totalCount": 4
+    }
+  }
+}
