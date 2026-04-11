@@ -2,9 +2,10 @@ import "server-only";
 
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import type { TagoBikeResponse, TagoBusResponse } from "@/types/tago";
+import type { TagoBusResponse } from "@/types/tago";
 import type { OdsayPubTransResponse } from "@/types/odsay";
 import type { KakaoKeywordSearchResponse } from "@/types/kakao";
+import type { PbdoStationAvailabilityResponse } from "@/types/pbdo";
 
 const FIXTURE_DIR = path.resolve(process.cwd(), "tests/fixtures");
 
@@ -17,8 +18,8 @@ export function loadBusPositionsFixture(): Promise<TagoBusResponse> {
   return loadJson<TagoBusResponse>("tago-bus-positions.json");
 }
 
-export function loadBikeStationsFixture(): Promise<TagoBikeResponse> {
-  return loadJson<TagoBikeResponse>("tago-bike-stations.json");
+export function loadPbdoAvailabilityFixture(): Promise<PbdoStationAvailabilityResponse> {
+  return loadJson<PbdoStationAvailabilityResponse>("pbdo-availability.json");
 }
 
 export function loadOdsayRouteFixture(): Promise<OdsayPubTransResponse> {

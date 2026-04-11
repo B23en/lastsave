@@ -4,7 +4,8 @@ import { GET as getBusPositions } from "@/app/api/bus/positions/route";
 import { GET as getBikeStations } from "@/app/api/bike/stations/route";
 import { GET as getCompare } from "@/app/api/route/compare/route";
 import { GET as getKakaoSearch } from "@/app/api/kakao/search/route";
-import type { TagoBikeResponse, TagoBusResponse } from "@/types/tago";
+import type { TagoBusResponse } from "@/types/tago";
+import type { BikeStation } from "@/types/pbdo";
 
 type KakaoSearchBody = {
   query: string;
@@ -64,22 +65,24 @@ describe("GET /api/bus/positions", () => {
 describe("GET /api/bike/stations", () => {
   beforeEach(() => {
     cacheClear();
-    delete process.env.TAGO_SERVICE_KEY;
+    delete process.env.PUBLIC_BIKE_SERVICE_KEY;
   });
 
-  it("returns the TAGO bike envelope from fixture", async () => {
+  it("returns normalized BikeStation list from PBDO fixture", async () => {
     const res = await getBikeStations(bikeReq());
     expect(res.status).toBe(200);
-    const body = (await res.json()) as TagoBikeResponse;
-    expect(body.response.header.resultCode).toBe("00");
-    if (typeof body.response.body.items === "string") {
-      throw new Error("expected items to be populated");
-    }
-    const items = body.response.body.items.item;
-    expect(items.length).toBeGreaterThan(0);
-    const first = items[0]!;
-    expect(first.stationId).toBeTypeOf("string");
-    expect(Number(first.rackTotCnt)).toBeGreaterThan(0);
+    const body = (await res.json()) as {
+      resultCode: string;
+      stations: BikeStation[];
+    };
+    expect(body.resultCode).toBe("K0");
+    expect(body.stations.length).toBeGreaterThan(0);
+    const first = body.stations[0]!;
+    expect(first.id).toBeTypeOf("string");
+    expect(first.name).toBeTypeOf("string");
+    expect(first.lat).toBeTypeOf("number");
+    expect(first.lng).toBeTypeOf("number");
+    expect(first.bikesAvailable).toBeTypeOf("number");
   });
 
   it("caches by region within TTL", async () => {
@@ -103,7 +106,7 @@ describe("GET /api/route/compare", () => {
     expect(res.status).toBe(400);
   });
 
-  it("returns a bus route and bike=null from the fixture path", async () => {
+  it("returns both bus and bike routes from fixtures", async () => {
     const res = await getCompare(
       compareReq(
         "?startX=126.9779&startY=37.5663&endX=127.0276&endY=37.4979",
@@ -112,12 +115,23 @@ describe("GET /api/route/compare", () => {
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       bus: { mode: string; totalDurationSec: number; polyline: unknown[] };
-      bike: unknown;
+      bike: {
+        mode: string;
+        isAvailable: boolean;
+        fromStationId?: string;
+        toStationId?: string;
+        polyline: unknown[];
+      };
     };
-    expect(body.bike).toBeNull();
     expect(body.bus.mode).toBe("bus");
     expect(body.bus.totalDurationSec).toBeGreaterThan(0);
     expect(body.bus.polyline.length).toBeGreaterThan(0);
+
+    expect(body.bike.mode).toBe("bike");
+    expect(body.bike.isAvailable).toBe(true);
+    expect(body.bike.fromStationId).toBeTypeOf("string");
+    expect(body.bike.toStationId).toBeTypeOf("string");
+    expect(body.bike.polyline.length).toBe(4);
   });
 });
 

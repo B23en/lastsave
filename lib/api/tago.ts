@@ -1,16 +1,11 @@
 import "server-only";
 
-import type { TagoBikeResponse, TagoBusResponse } from "@/types/tago";
+import type { TagoBusResponse } from "@/types/tago";
 import { memoCache } from "./cache";
-import {
-  loadBikeStationsFixture,
-  loadBusPositionsFixture,
-} from "./fixtures";
+import { loadBusPositionsFixture } from "./fixtures";
 
 const TAGO_BUS_BASE =
   "https://apis.data.go.kr/1613000/BusLcInfoInqireService";
-const TAGO_BIKE_BASE =
-  "https://apis.data.go.kr/B553530/bikeList/getBikeList";
 const CACHE_TTL_MS = 15_000;
 
 const serviceKey = () => process.env.TAGO_SERVICE_KEY ?? "";
@@ -20,13 +15,8 @@ export type BusPositionsParams = {
   routeId: string;
 };
 
-export type BikeStationsParams = {
-  /** 기본 서울(따릉이) = "SEOUL_BIKE" 등 지역 코드 */
-  region?: string;
-};
-
 /**
- * 초정밀버스 실시간 위치. 키가 없으면 fixture로 폴백한다.
+ * 초정밀버스 실시간 위치. 키가 없거나 호출 실패 시 fixture 로 폴백한다.
  */
 export async function fetchBusPositions(
   params: BusPositionsParams,
@@ -44,36 +34,15 @@ export async function fetchBusPositions(
     url.searchParams.set("pageNo", "1");
     url.searchParams.set("_type", "json");
 
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) {
-      throw new Error(`TAGO bus fetch failed: ${res.status}`);
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) {
+        throw new Error(`TAGO bus fetch failed: ${res.status}`);
+      }
+      return (await res.json()) as TagoBusResponse;
+    } catch (err) {
+      console.warn("[tago] upstream call failed, falling back to fixture:", err);
+      return loadBusPositionsFixture();
     }
-    return (await res.json()) as TagoBusResponse;
-  });
-}
-
-/**
- * 공영자전거 실시간 거치 정보. 키가 없으면 fixture로 폴백한다.
- */
-export async function fetchBikeStations(
-  params: BikeStationsParams = {},
-): Promise<TagoBikeResponse> {
-  const region = params.region ?? "ALL";
-  const cacheKey = `tago:bike:${region}`;
-  return memoCache(cacheKey, CACHE_TTL_MS, async () => {
-    if (!serviceKey()) {
-      return loadBikeStationsFixture();
-    }
-    const url = new URL(TAGO_BIKE_BASE);
-    url.searchParams.set("serviceKey", serviceKey());
-    url.searchParams.set("numOfRows", "200");
-    url.searchParams.set("pageNo", "1");
-    url.searchParams.set("_type", "json");
-
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) {
-      throw new Error(`TAGO bike fetch failed: ${res.status}`);
-    }
-    return (await res.json()) as TagoBikeResponse;
   });
 }

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { fetchBikeStations, normalizeStations } from "@/lib/api/pbdo";
 import { searchPubTransPath } from "@/lib/api/odsay";
+import { buildBikeRoute } from "@/lib/domain/bikeRoute";
 import { mapOdsayToBusRoute } from "@/lib/domain/odsayMapper";
 import type { BikeRoute, BusRoute } from "@/types/trip";
 
@@ -7,8 +9,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export type CompareResponse = {
-  bus: BusRoute | null;
-  bike: BikeRoute | null;
+  bus: BusRoute;
+  bike: BikeRoute;
 };
 
 export async function GET(req: Request) {
@@ -29,30 +31,36 @@ export async function GET(req: Request) {
   }
 
   try {
-    const odsayResponse = await searchPubTransPath({
-      startX: startX!,
-      startY: startY!,
-      endX: endX!,
-      endY: endY!,
+    const [odsayResponse, bikeRawResponse] = await Promise.all([
+      searchPubTransPath({
+        startX: startX!,
+        startY: startY!,
+        endX: endX!,
+        endY: endY!,
+      }),
+      fetchBikeStations(),
+    ]);
+
+    const bus =
+      mapOdsayToBusRoute(odsayResponse) ??
+      ({
+        mode: "bus",
+        totalDurationSec: 0,
+        walkDurationSec: 0,
+        transferCount: 0,
+        legs: [],
+        isServiceEnded: true,
+        polyline: [],
+      } satisfies BusRoute);
+
+    const stations = normalizeStations(bikeRawResponse);
+    const bike = buildBikeRoute({
+      origin: { lat: startY!, lng: startX! },
+      destination: { lat: endY!, lng: endX! },
+      stations,
     });
 
-    const bus = mapOdsayToBusRoute(odsayResponse);
-
-    const body: CompareResponse = {
-      bus:
-        bus ??
-        ({
-          mode: "bus",
-          totalDurationSec: 0,
-          walkDurationSec: 0,
-          transferCount: 0,
-          legs: [],
-          isServiceEnded: true,
-          polyline: [],
-        } satisfies BusRoute),
-      bike: null,
-    };
-
+    const body: CompareResponse = { bus, bike };
     return NextResponse.json(body, {
       headers: { "Cache-Control": "no-store" },
     });

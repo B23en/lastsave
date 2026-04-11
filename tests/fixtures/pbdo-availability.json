@@ -1,0 +1,58 @@
+{
+  "header": {
+    "resultCode": "K0",
+    "resultMsg": "NORMAL_SERVICE"
+  },
+  "body": {
+    "totalCount": "5",
+    "pageNo": "1",
+    "numOfRows": "5",
+    "item": [
+      {
+        "rntstnId": "SEL-00101",
+        "rntstnNm": "시청역 1번 출구",
+        "lcgvmnInstCd": "1100000000",
+        "lcgvmnInstNm": "서울특별시",
+        "lat": "37.5648",
+        "lot": "126.9768",
+        "bcyclTpkctNocs": "12"
+      },
+      {
+        "rntstnId": "SEL-00102",
+        "rntstnNm": "시청역 3번 출구",
+        "lcgvmnInstCd": "1100000000",
+        "lcgvmnInstNm": "서울특별시",
+        "lat": "37.5657",
+        "lot": "126.9775",
+        "bcyclTpkctNocs": "4"
+      },
+      {
+        "rntstnId": "SEL-00103",
+        "rntstnNm": "덕수궁 대한문 앞",
+        "lcgvmnInstCd": "1100000000",
+        "lcgvmnInstNm": "서울특별시",
+        "lat": "37.5661",
+        "lot": "126.9754",
+        "bcyclTpkctNocs": "0"
+      },
+      {
+        "rntstnId": "SEL-00201",
+        "rntstnNm": "광화문역 7번 출구",
+        "lcgvmnInstCd": "1100000000",
+        "lcgvmnInstNm": "서울특별시",
+        "lat": "37.5715",
+        "lot": "126.9766",
+        "bcyclTpkctNocs": "18"
+      },
+      {
+        "rntstnId": "SEL-00501",
+        "rntstnNm": "강남역 5번 출구",
+        "lcgvmnInstCd": "1100000000",
+        "lcgvmnInstNm": "서울특별시",
+        "lat": "37.4982",
+        "lot": "127.0281",
+        "bcyclTpkctNocs": "15"
+      }
+    ]
+  }
+}

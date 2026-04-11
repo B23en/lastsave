@@ -25,6 +25,7 @@ function mkBike(overrides: Partial<BikeRoute> = {}): BikeRoute {
     fromStationBikesAvailable: 5,
     toStationDocksAvailable: 10,
     isAvailable: true,
+    legs: [],
     polyline: [],
     ...overrides,
   };

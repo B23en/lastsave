@@ -33,19 +33,4 @@ export type TagoBusPositionItem = {
   vehicleno: string;
 };
 
-/**
- * 공공자전거 실시간 정보 개별 항목.
- * https://www.data.go.kr/data/15062798/openapi.do
- */
-export type TagoBikeStationItem = {
-  stationId: string;
-  stationNm: string;
-  stationLatitude: string;
-  stationLongitude: string;
-  rackTotCnt: string;
-  parkingBikeTotCnt: string;
-  shared: string;
-};
-
 export type TagoBusResponse = TagoEnvelope<TagoBusPositionItem>;
-export type TagoBikeResponse = TagoEnvelope<TagoBikeStationItem>;

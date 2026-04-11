@@ -38,6 +38,34 @@ export function MapCanvas({
 
   const busPolyline =
     compare.status === "success" ? (compare.data.bus?.polyline ?? []) : [];
+  const bikePolyline =
+    compare.status === "success" && compare.data.bike.isAvailable
+      ? compare.data.bike.polyline
+      : [];
+  const bikeStations =
+    compare.status === "success" && compare.data.bike.isAvailable
+      ? [
+          {
+            name: compare.data.bike.fromStationName,
+            coord: compare.data.bike.polyline[1],
+            bikes: compare.data.bike.fromStationBikesAvailable,
+            role: "pickup" as const,
+          },
+          {
+            name: compare.data.bike.toStationName,
+            coord: compare.data.bike.polyline[2],
+            bikes: 0,
+            role: "dropoff" as const,
+          },
+        ].filter(
+          (s): s is {
+            name: string | undefined;
+            coord: NonNullable<typeof s.coord>;
+            bikes: number;
+            role: "pickup" | "dropoff";
+          } => Boolean(s.coord),
+        )
+      : [];
 
   const mapRef = useRef<KakaoMapInstance | null>(null);
 
@@ -151,6 +179,30 @@ export function MapCanvas({
           strokeStyle="solid"
         />
       )}
+      {bikePolyline.length > 1 && (
+        <Polyline
+          path={bikePolyline}
+          strokeWeight={5}
+          strokeColor="#22c55e"
+          strokeOpacity={0.9}
+          strokeStyle="shortdash"
+        />
+      )}
+      {bikeStations.map((s, i) => (
+        <MapMarker
+          key={`${s.role}-${i}`}
+          position={s.coord}
+          title={`${s.name ?? ""} · ${s.role === "pickup" ? `${s.bikes}대 대여 가능` : "반납 거치대"}`}
+          image={{
+            src:
+              "data:image/svg+xml;utf8," +
+              encodeURIComponent(
+                `<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26"><rect x="3" y="3" width="20" height="20" rx="6" fill="#22c55e" stroke="white" stroke-width="2"/></svg>`,
+              ),
+            size: { width: 26, height: 26 },
+          }}
+        />
+      ))}
       {!origin && !destination && (
         <MapMarker position={fallbackCenter} title="서울시청" />
       )}

@@ -19,8 +19,8 @@ export type LocationStatus =
   | { kind: "unavailable"; reason?: string };
 
 export type CompareData = {
-  bus: BusRoute | null;
-  bike: BikeRoute | null;
+  bus: BusRoute;
+  bike: BikeRoute;
 };
 
 export type CompareState =

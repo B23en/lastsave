@@ -39,6 +39,7 @@ export type BikeRoute = {
   toStationName?: string;
   toStationDocksAvailable: number;
   isAvailable: boolean;
+  legs: RouteLeg[];
   polyline: Coord[];
 };
 
