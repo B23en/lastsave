@@ -4,8 +4,8 @@ import { GET as getBusPositions } from "@/app/api/bus/positions/route";
 import { GET as getBikeStations } from "@/app/api/bike/stations/route";
 import { GET as getCompare } from "@/app/api/route/compare/route";
 import { GET as getKakaoSearch } from "@/app/api/kakao/search/route";
-import type { TagoBusResponse } from "@/types/tago";
 import type { BikeStation } from "@/types/pbdo";
+import type { LiveBus } from "@/types/trip";
 
 type KakaoSearchBody = {
   query: string;
@@ -30,22 +30,26 @@ describe("GET /api/bus/positions", () => {
     delete process.env.TAGO_SERVICE_KEY;
   });
 
-  it("returns the TAGO bus envelope from fixture on cold miss", async () => {
+  it("returns a flat LiveBus list from TAGO fixture on cold miss", async () => {
     const res = await getBusPositions(busReq());
     expect(res.status).toBe(200);
     expect(res.headers.get("X-Cache")).toBe("MISS");
 
-    const body = (await res.json()) as TagoBusResponse;
-    expect(body.response.header.resultCode).toBe("00");
-    expect(body.response.body.totalCount).toBeGreaterThan(0);
-    if (typeof body.response.body.items === "string") {
-      throw new Error("expected items to be populated");
-    }
-    const first = body.response.body.items.item[0];
-    expect(first).toBeDefined();
-    expect(first!.gpslati).toBeTypeOf("number");
-    expect(first!.gpslong).toBeTypeOf("number");
-    expect(first!.routenm).toBeTypeOf("string");
+    const body = (await res.json()) as { buses: LiveBus[] };
+    expect(body.buses.length).toBeGreaterThan(0);
+    const first = body.buses[0]!;
+    expect(first.lat).toBeTypeOf("number");
+    expect(first.lng).toBeTypeOf("number");
+    expect(first.routeName).toBeTypeOf("string");
+    expect(first.vehicleNo).toBeTypeOf("string");
+  });
+
+  it("filters by routeNm when provided", async () => {
+    const res = await getBusPositions(busReq("?routeNm=N16"));
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { buses: LiveBus[] };
+    expect(body.buses.length).toBeGreaterThan(0);
+    expect(body.buses.every((b) => b.routeName === "N16")).toBe(true);
   });
 
   it("marks second call within TTL as X-Cache: HIT", async () => {

@@ -87,6 +87,12 @@ describe("mapOdsayToBusRoute", () => {
     expect(route.legs[1]!.durationSec).toBe(22 * 60);
   });
 
+  it("captures the bus route name from the lane field", () => {
+    const route = mapOdsayToBusRoute(FIXTURE)!;
+    expect(route.legs[1]!.routeName).toBe("N16");
+    expect(route.legs[0]!.routeName).toBeUndefined();
+  });
+
   it("extracts a polyline from passStopList stations", () => {
     const route = mapOdsayToBusRoute(FIXTURE)!;
     expect(route.polyline.length).toBe(3);

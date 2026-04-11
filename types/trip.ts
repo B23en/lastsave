@@ -11,6 +11,8 @@ export type RouteLeg = {
   kind: "walk" | "bus" | "bike" | "subway";
   fromName?: string;
   toName?: string;
+  /** bus/subway 인 경우 노선명 (예: "N16", "2호선") */
+  routeName?: string;
   distanceMeters: number;
   durationSec: number;
 };
@@ -53,4 +55,13 @@ export type RecommendationBadge = {
   winner: RouteMode | null;
   reason: "faster" | "safer" | "only_option" | "tie";
   label: string;
+};
+
+export type LiveBus = {
+  routeId: string;
+  routeName: string;
+  vehicleNo: string;
+  stationName?: string;
+  lat: number;
+  lng: number;
 };

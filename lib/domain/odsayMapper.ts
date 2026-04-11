@@ -54,6 +54,7 @@ function mapLeg(sub: OdsaySubPath): RouteLeg {
     kind,
     fromName: sub.startName,
     toName: sub.endName,
+    routeName: sub.lane?.[0]?.busNo,
     distanceMeters: sub.distance,
     durationSec: sub.sectionTime * 60,
   };

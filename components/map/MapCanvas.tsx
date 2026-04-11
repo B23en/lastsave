@@ -14,6 +14,7 @@ type KakaoMapInstance = Parameters<MapOnCreate>[0];
 import type { Coord } from "@/types/trip";
 import { KAKAO_MAP_KEY, SEOUL_CITY_HALL } from "@/lib/config";
 import { useTripStore } from "@/lib/store/useTripStore";
+import { useBusPositions } from "@/lib/hooks/useBusPositions";
 
 type MapCanvasProps = {
   fallbackCenter?: Coord;
@@ -41,6 +42,20 @@ export function MapCanvas({
     selectedMode === null ? 0.9 : selectedMode === "bus" ? 1 : 0.25;
   const bikeOpacity =
     selectedMode === null ? 0.9 : selectedMode === "bike" ? 1 : 0.25;
+
+  const busRouteName =
+    compare.status === "success"
+      ? firstBusLaneName(compare.data.bus.legs)
+      : undefined;
+  const busPositionsEnabled =
+    compare.status === "success" &&
+    !compare.data.bus.isServiceEnded &&
+    selectedMode === "bus";
+  const { data: busLive } = useBusPositions({
+    routeNm: busRouteName,
+    enabled: busPositionsEnabled,
+  });
+  const liveBuses = busLive?.buses ?? [];
 
   const busPolyline =
     compare.status === "success" ? (compare.data.bus?.polyline ?? []) : [];
@@ -209,11 +224,37 @@ export function MapCanvas({
           }}
         />
       ))}
+      {liveBuses.map((bus) => (
+        <MapMarker
+          key={`live-${bus.vehicleNo}`}
+          position={{ lat: bus.lat, lng: bus.lng }}
+          title={`${bus.routeName} · ${bus.vehicleNo}${bus.stationName ? ` · ${bus.stationName}` : ""}`}
+          image={{
+            src:
+              "data:image/svg+xml;utf8," +
+              encodeURIComponent(
+                `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28"><circle cx="14" cy="14" r="11" fill="#3b82f6" stroke="white" stroke-width="3"/><text x="14" y="18" text-anchor="middle" font-family="system-ui" font-size="11" font-weight="700" fill="white">버</text></svg>`,
+              ),
+            size: { width: 28, height: 28 },
+          }}
+        />
+      ))}
       {!origin && !destination && (
         <MapMarker position={fallbackCenter} title="서울시청" />
       )}
     </Map>
   );
+}
+
+function firstBusLaneName(
+  legs: { kind: string; routeName?: string }[],
+): string | undefined {
+  for (const leg of legs) {
+    if (leg.kind === "bus" && leg.routeName) {
+      return leg.routeName;
+    }
+  }
+  return undefined;
 }
 
 function MapSkeleton() {
