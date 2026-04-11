@@ -1,0 +1,51 @@
+{
+  "header": {
+    "resultCode": "K0",
+    "resultMsg": "NORMAL_SERVICE"
+  },
+  "body": {
+    "totalCount": "3",
+    "pageNo": "1",
+    "numOfRows": "10",
+    "items": {
+      "item": [
+        {
+          "stdgCd": "1100000000",
+          "lclgvNm": "서울특별시",
+          "rteId": "SEL-N16",
+          "rteNo": "N16",
+          "vhclNo": "서울70사1234",
+          "lat": "37.5663",
+          "lot": "126.9779",
+          "oprDrct": "180",
+          "oprSpd": "24",
+          "evtType": "GNSS"
+        },
+        {
+          "stdgCd": "1100000000",
+          "lclgvNm": "서울특별시",
+          "rteId": "SEL-N16",
+          "rteNo": "N16",
+          "vhclNo": "서울70사5678",
+          "lat": "37.5702",
+          "lot": "126.9824",
+          "oprDrct": "175",
+          "oprSpd": "31",
+          "evtType": "GNSS"
+        },
+        {
+          "stdgCd": "1100000000",
+          "lclgvNm": "서울특별시",
+          "rteId": "SEL-N26",
+          "rteNo": "N26",
+          "vhclNo": "서울70바0421",
+          "lat": "37.5641",
+          "lot": "126.9744",
+          "oprDrct": "90",
+          "oprSpd": "19",
+          "evtType": "GPS"
+        }
+      ]
+    }
+  }
+}

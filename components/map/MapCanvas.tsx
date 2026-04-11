@@ -52,7 +52,7 @@ export function MapCanvas({
     !compare.data.bus.isServiceEnded &&
     selectedMode === "bus";
   const { data: busLive } = useBusPositions({
-    routeNm: busRouteName,
+    rteNo: busRouteName,
     enabled: busPositionsEnabled,
   });
   const liveBuses = busLive?.buses ?? [];

@@ -16,8 +16,8 @@
 | [ ] Web 플랫폼 도메인에 프로덕션 URL 등록 | | 배포 후 추가 |
 | [ ] ODsay LAB 애플리케이션 생성 + apiKey | | `ODSAY_KEY` |
 | [ ] 공공데이터포털 로그인 | | |
-| [ ] 15098534 초정밀버스 활용신청 (자동승인) | | `TAGO_SERVICE_KEY` |
-| [ ] 15126639 공영자전거 실시간 활용신청 (자동승인) | | `PUBLIC_BIKE_SERVICE_KEY` |
+| [ ] 15157601 전국 통합데이터 초정밀버스 활용신청 (자동승인) | | `REALTIME_BUS_SERVICE_KEY` |
+| [ ] 15126639 전국 공영자전거 실시간 활용신청 (자동승인) | | `PUBLIC_BIKE_SERVICE_KEY` |
 | [ ] 공공데이터포털 키 전파 대기 완료 (30분~2시간) | | 502 사라짐 확인 |
 
 ## 2. 로컬 최종 검증
@@ -48,7 +48,7 @@
 - [ ] `pnpm build` green
 - [ ] API 키 번들 누출 검사:
   ```bash
-  rg "TAGO_SERVICE_KEY|ODSAY_KEY|KAKAO_REST_KEY|PUBLIC_BIKE_SERVICE_KEY" .next/static
+  rg "REALTIME_BUS_SERVICE_KEY|ODSAY_KEY|KAKAO_REST_KEY|PUBLIC_BIKE_SERVICE_KEY" .next/static
   ```
   → 0건
 
@@ -99,8 +99,8 @@ npx lighthouse http://localhost:3000 --view --output=html
 - [ ] 팀/개인 정보 입력
 - [ ] 작품명: **막차세이브 (LastSave)**
 - [ ] 활용 데이터 기재:
-  - 공공데이터포털 15126639 — 전국 공영자전거 실시간 정보
-  - 공공데이터포털 15098534 — 전국 초정밀버스 실시간 위치 정보
+  - 공공데이터포털 15126639 — 행정안전부 한국지역정보개발원 (전국 통합데이터) 전국 공영자전거 실시간 정보
+  - 공공데이터포털 15157601 — 행정안전부 한국지역정보개발원 (전국 통합데이터) 초정밀버스 위치 실시간 정보
 - [ ] 퍼블릭 URL 제출
 - [ ] 소스 저장소 URL 제출 (GitHub public)
 - [ ] 시연 영상 링크 제출

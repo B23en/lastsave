@@ -27,15 +27,19 @@ const bikeReq = (qs = "") =>
 describe("GET /api/bus/positions", () => {
   beforeEach(() => {
     cacheClear();
-    delete process.env.TAGO_SERVICE_KEY;
+    delete process.env.REALTIME_BUS_SERVICE_KEY;
   });
 
-  it("returns a flat LiveBus list from TAGO fixture on cold miss", async () => {
+  it("returns a flat LiveBus list from realtime-bus fixture on cold miss", async () => {
     const res = await getBusPositions(busReq());
     expect(res.status).toBe(200);
     expect(res.headers.get("X-Cache")).toBe("MISS");
 
-    const body = (await res.json()) as { buses: LiveBus[] };
+    const body = (await res.json()) as {
+      resultCode: string;
+      buses: LiveBus[];
+    };
+    expect(body.resultCode).toBe("K0");
     expect(body.buses.length).toBeGreaterThan(0);
     const first = body.buses[0]!;
     expect(first.lat).toBeTypeOf("number");
@@ -44,8 +48,8 @@ describe("GET /api/bus/positions", () => {
     expect(first.vehicleNo).toBeTypeOf("string");
   });
 
-  it("filters by routeNm when provided", async () => {
-    const res = await getBusPositions(busReq("?routeNm=N16"));
+  it("filters by rteNo when provided", async () => {
+    const res = await getBusPositions(busReq("?rteNo=N16"));
     expect(res.status).toBe(200);
     const body = (await res.json()) as { buses: LiveBus[] };
     expect(body.buses.length).toBeGreaterThan(0);
@@ -58,9 +62,9 @@ describe("GET /api/bus/positions", () => {
     expect(res.headers.get("X-Cache")).toBe("HIT");
   });
 
-  it("scopes cache per routeId query", async () => {
-    const a = await getBusPositions(busReq("?routeId=R-A"));
-    const b = await getBusPositions(busReq("?routeId=R-B"));
+  it("scopes cache per stdgCd query", async () => {
+    const a = await getBusPositions(busReq("?stdgCd=1100000000"));
+    const b = await getBusPositions(busReq("?stdgCd=4100000000"));
     expect(a.headers.get("X-Cache")).toBe("MISS");
     expect(b.headers.get("X-Cache")).toBe("MISS");
   });

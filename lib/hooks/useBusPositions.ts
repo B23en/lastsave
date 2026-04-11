@@ -4,12 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useSyncExternalStore } from "react";
 import type { LiveBus } from "@/types/trip";
 
-type Response = { buses: LiveBus[] };
+type Response = { buses: LiveBus[]; resultCode?: string };
 
 export type BusPositionsInput = {
-  routeId?: string;
-  cityCode?: string;
-  routeNm?: string;
+  /** 지자체 법정동 코드 10자리. 기본 서울 1100000000. */
+  stdgCd?: string;
+  /** 사용자 노출 노선번호 (예: "N16"). 지정 시 해당 노선만 표시. */
+  rteNo?: string;
   enabled?: boolean;
 };
 
@@ -20,23 +21,21 @@ const REFETCH_MS = 15_000;
  * 탭이 백그라운드로 가면 polling 을 중단하고, 돌아오면 재개한다.
  */
 export function useBusPositions({
-  routeId,
-  cityCode = "11",
-  routeNm,
+  stdgCd = "1100000000",
+  rteNo,
   enabled = true,
 }: BusPositionsInput) {
   const visible = useVisible();
 
   return useQuery<Response>({
-    queryKey: ["bus-positions", cityCode, routeId ?? "default", routeNm ?? ""],
+    queryKey: ["bus-positions", stdgCd, rteNo ?? ""],
     enabled: enabled && visible,
     refetchInterval: visible ? REFETCH_MS : false,
     refetchIntervalInBackground: false,
     queryFn: async () => {
       const qs = new URLSearchParams();
-      qs.set("cityCode", cityCode);
-      if (routeId) qs.set("routeId", routeId);
-      if (routeNm) qs.set("routeNm", routeNm);
+      qs.set("stdgCd", stdgCd);
+      if (rteNo) qs.set("rteNo", rteNo);
       const res = await fetch(`/api/bus/positions?${qs}`, {
         cache: "no-store",
       });

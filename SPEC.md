@@ -23,10 +23,10 @@
 ### 1.4 활용 공공데이터 (공모전 요건)
 | 데이터 | 제공처 | 용도 |
 |---|---|---|
-| 전국 공영자전거 실시간 정보 | 공공데이터포털 | 거치대 위치·잔여 자전거/거치대 수 |
-| 전국 초정밀 버스 실시간 위치 정보 | 공공데이터포털 | 버스 실시간 위치·예상 도착 시각 |
-| (보조) 전국 버스정류장 위치정보 | TAGO | 정류장 좌표·노선 매칭 |
-| (보조) 도시철도 막차/첫차 시각표 | 공공데이터포털 | 막차 종료 판단 |
+| 전국 공영자전거 실시간 정보 | 공공데이터포털 15126639 (행안부 한국지역정보개발원 / 전국 통합데이터) | 거치대 위치·잔여 자전거 |
+| 초정밀버스 위치 실시간 정보 | 공공데이터포털 15157601 (행안부 한국지역정보개발원 / 전국 통합데이터) | 버스 GPS·노선·차량번호 |
+| 대중교통 경로 탐색 | ODsay LAB | 버스/지하철 경로 산정 |
+| 지도 및 POI 검색 | 카카오 Developers | 지도 렌더·주소·키워드 검색 |
 
 ### 1.5 성공 기준 (공모전 평가축과 매칭)
 - **[데이터 활용도]** 위 2개 핵심 API를 실시간 polling으로 결합하고, 가공한 지표(ETA·막차 놓침 확률·자전거 가용성)를 사용자에게 노출한다.
@@ -94,15 +94,15 @@
   - 공공 API 키는 **서버 측에서만** 주입 (노출 금지)
   - 클라이언트는 `/api/bus`, `/api/bike`, `/api/route` 엔드포인트만 호출
 - **외부 API**
-  - 국토교통부 TAGO `getCtyCodeBusPosInfo` — 버스 실시간 위치
-  - 국토교통부 TAGO `getBicycleList` — 공영자전거 거치대
+  - 행안부 한국지역정보개발원 `B551982/rte/rtm_loc_info` — 전국 통합데이터 초정밀버스 실시간 위치 (data.go.kr 15157601)
+  - 행안부 한국지역정보개발원 `B551982/pbdo_v2/inf_101_00010002_v2` — 전국 공영자전거 실시간 정보 (data.go.kr 15126639)
   - ODsay `searchPubTransPathT` — 대중교통 경로
-  - (옵션) 카카오 로컬 API — 주소·POI 검색
-- **캐시:** TAGO 응답은 서버 메모리 TTL 15초 캐시(중복 호출 비용 절감)
+  - 카카오 로컬 API — 주소·POI 검색
+- **캐시:** 외부 API 응답은 서버 메모리 TTL 15초 캐시 + 60초 서킷 브레이커(중복 호출 비용 절감, 전파 지연 시 즉시 fixture 폴백)
 
 ### 3.3 배포 & 운영
 - **호스팅:** Vercel (공모전 심사용 퍼블릭 URL 1-click 배포)
-- **환경변수:** `KAKAO_MAP_KEY`, `ODSAY_KEY`, `TAGO_SERVICE_KEY` (Vercel Project Settings)
+- **환경변수:** `NEXT_PUBLIC_KAKAO_MAP_KEY`, `KAKAO_REST_KEY`, `ODSAY_KEY`, `REALTIME_BUS_SERVICE_KEY`, `PUBLIC_BIKE_SERVICE_KEY` (Vercel Project Settings)
 - **모니터링:** Vercel Analytics + Sentry(무료 티어) 에러 추적
 - **도메인:** `lastsave.vercel.app` (임시)
 

@@ -33,12 +33,12 @@
 
 | 데이터 | 출처 | 용도 | 엔드포인트 |
 |---|---|---|---|
-| 전국 공영자전거 실시간 정보 | 공공데이터포털 (행안부 한국지역정보개발원) | 거치대 위치·잔여 자전거 | `B551982/pbdo_v2/inf_101_00010002_v2` |
-| 전국 초정밀버스 실시간 위치 | 공공데이터포털 (국토교통부 TAGO) | 버스 GPS·정류장 | `1613000/BusLcInfoInqireService` |
+| 전국 공영자전거 실시간 정보 | 공공데이터포털 15126639 (행안부 한국지역정보개발원) | 거치대 위치·잔여 자전거 | `B551982/pbdo_v2/inf_101_00010002_v2` |
+| 전국 초정밀버스 실시간 위치 | 공공데이터포털 15157601 (행안부 한국지역정보개발원) | 버스 GPS·노선 | `B551982/rte/rtm_loc_info` |
 | 대중교통 경로 탐색 | ODsay LAB | 버스·지하철 경로 | `searchPubTransPathT` |
 | 지도·주소검색 | 카카오 Developers | 지도 타일·POI | `kakao.maps.sdk` + `dapi.kakao.com/v2/local` |
 
-> 공모전 심사 기준의 "통합 데이터 활용"에 맞춰 **2개의 공공데이터포털 API를 실시간 polling + 경로 산정에 결합**합니다. 두 API의 서비스 키는 `.env.local` 에서 각각 `TAGO_SERVICE_KEY`, `PUBLIC_BIKE_SERVICE_KEY` 로 설정합니다.
+> 공모전 심사 기준의 "통합 데이터 활용"에 맞춰 **행정안전부 한국지역정보개발원의 전국 통합데이터 2종**을 실시간 polling + 경로 산정에 결합합니다. 두 API 는 같은 공공데이터포털 계정의 단일 서비스키로 호출되며, `.env.local` 에 `REALTIME_BUS_SERVICE_KEY`, `PUBLIC_BIKE_SERVICE_KEY` 로 설정합니다 (같은 값을 두 변수에 넣어도 됩니다).
 
 ---
 
@@ -66,7 +66,7 @@
 │ Next.js Route Handlers (server, BFF)     │
 │                                           │
 │  /api/route/compare  → ODsay + PBDO       │
-│  /api/bus/positions  → TAGO               │
+│  /api/bus/positions  → 통합데이터 실시간버스│
 │  /api/bike/stations  → PBDO (B551982)     │
 │  /api/kakao/search   → Kakao Local        │
 │                                           │
@@ -111,8 +111,10 @@ cp .env.example .env.local
 | `NEXT_PUBLIC_KAKAO_MAP_KEY` | [카카오 Developers](https://developers.kakao.com) → 내 애플리케이션 → JavaScript 키 | 카카오맵 렌더 |
 | `KAKAO_REST_KEY` | 동일 앱의 REST API 키 | 주소/키워드 검색 (서버 전용) |
 | `ODSAY_KEY` | [ODsay LAB](https://lab.odsay.com) | 대중교통 경로 산정 |
-| `TAGO_SERVICE_KEY` | [data.go.kr 15098534](https://www.data.go.kr/data/15098534/openapi.do) | 초정밀버스 실시간 위치 |
-| `PUBLIC_BIKE_SERVICE_KEY` | [data.go.kr 15126639](https://www.data.go.kr/data/15126639/openapi.do) | 공영자전거 실시간 정보 |
+| `REALTIME_BUS_SERVICE_KEY` | [data.go.kr 15157601](https://www.data.go.kr/data/15157601/openapi.do) | (전국 통합데이터) 초정밀버스 실시간 위치 |
+| `PUBLIC_BIKE_SERVICE_KEY` | [data.go.kr 15126639](https://www.data.go.kr/data/15126639/openapi.do) | 전국 공영자전거 실시간 정보 |
+
+> 위 두 data.go.kr 키는 하나의 계정이 발급한 동일한 값이어도 됩니다 (각 API 에 활용 신청이 따로 필요할 뿐, 서비스키 자체는 계정 공용).
 
 > **중요**: 카카오맵 키 발급 후 반드시 Developers 콘솔에서 **카카오맵 서비스 활성화 ON** + **Web 플랫폼 도메인에 `http://localhost:3000` 등록** 두 단계를 모두 해야 지도가 로드됩니다.
 
@@ -175,7 +177,7 @@ pnpm dev
 │  │  ├─ cache.ts               # 15s TTL 메모리 캐시
 │  │  ├─ http.ts                # fetchWithTimeout + 서킷 브레이커
 │  │  ├─ fixtures.ts            # 오프라인 폴백 로더
-│  │  ├─ tago.ts                # 초정밀버스
+│  │  ├─ realtimeBus.ts         # 통합데이터 초정밀버스
 │  │  ├─ pbdo.ts                # 공영자전거
 │  │  ├─ odsay.ts               # 대중교통 경로
 │  │  └─ kakao.ts               # 로컬 키워드 검색
@@ -193,7 +195,7 @@ pnpm dev
 ├─ types/                       # 외부/도메인 타입
 │  ├─ trip.ts                   # Coord, BusRoute, BikeRoute, RiskLevel
 │  ├─ kakao.ts, odsay.ts
-│  ├─ tago.ts, pbdo.ts
+│  ├─ pbdo.ts, realtimeBus.ts
 ├─ tests/
 │  ├─ unit/                     # 도메인 단위 테스트 (82 cases)
 │  ├─ integration/              # 라우트 핸들러 통합 테스트
@@ -262,7 +264,7 @@ pnpm dlx vercel
 pnpm dlx vercel env add NEXT_PUBLIC_KAKAO_MAP_KEY
 pnpm dlx vercel env add KAKAO_REST_KEY
 pnpm dlx vercel env add ODSAY_KEY
-pnpm dlx vercel env add TAGO_SERVICE_KEY
+pnpm dlx vercel env add REALTIME_BUS_SERVICE_KEY
 pnpm dlx vercel env add PUBLIC_BIKE_SERVICE_KEY
 
 # 4. 프로덕션 배포
@@ -276,7 +278,7 @@ pnpm dlx vercel --prod
 ## 보안 원칙
 
 - 공공 API 키는 반드시 `.env.local` / Vercel 환경 변수에만 저장. **절대 커밋 금지** (`.gitignore` 에 `.env*` 등록, `!.env.example` 예외)
-- 공공데이터 관련 서버 전용 키(`ODSAY_KEY`, `TAGO_SERVICE_KEY`, `PUBLIC_BIKE_SERVICE_KEY`, `KAKAO_REST_KEY`)는 `app/api/*` 및 `lib/api/*` 에서만 로드하며 `import "server-only"` 가드로 클라이언트 번들 유입을 차단
+- 공공데이터 관련 서버 전용 키(`ODSAY_KEY`, `REALTIME_BUS_SERVICE_KEY`, `PUBLIC_BIKE_SERVICE_KEY`, `KAKAO_REST_KEY`)는 `app/api/*` 및 `lib/api/*` 에서만 로드하며 `import "server-only"` 가드로 클라이언트 번들 유입을 차단
 - `NEXT_PUBLIC_KAKAO_MAP_KEY` 만 클라이언트에 노출되며, 카카오 Developers 에서 허용 도메인 화이트리스트로 보호
 
 ---
@@ -285,7 +287,7 @@ pnpm dlx vercel --prod
 
 공공데이터 활용 시 각 제공 기관의 약관을 준수합니다. 배포 환경에서는 이용 기관명·출처를 푸터에 명시합니다.
 
-- 행정안전부 한국지역정보개발원 · 공영자전거 실시간 정보 (공공데이터포털 15126639)
-- 국토교통부 · 초정밀버스 위치 실시간 정보 (공공데이터포털 15098534)
+- 행정안전부 한국지역정보개발원 · 전국 공영자전거 실시간 정보 (공공데이터포털 15126639)
+- 행정안전부 한국지역정보개발원 · 전국 통합데이터 초정밀버스 위치 실시간 정보 (공공데이터포털 15157601)
 - ODsay LAB · 대중교통 경로 탐색 API
 - Kakao Developers · 카카오맵 SDK + 로컬 API
