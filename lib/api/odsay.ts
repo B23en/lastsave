@@ -3,6 +3,11 @@ import "server-only";
 import type { OdsayPubTransResponse } from "@/types/odsay";
 import { memoCache } from "./cache";
 import { loadOdsayRouteFixture } from "./fixtures";
+import {
+  fetchWithTimeout,
+  isUpstreamBlocked,
+  markUpstreamFailure,
+} from "./http";
 
 const ODSAY_BASE = "https://api.odsay.com/v1/api/searchPubTransPathT";
 const CACHE_TTL_MS = 30_000;
@@ -27,7 +32,7 @@ export async function searchPubTransPath(
   const { startX, startY, endX, endY, searchType = 0 } = params;
   const cacheKey = `odsay:${startX},${startY}->${endX},${endY}:${searchType}`;
   return memoCache(cacheKey, CACHE_TTL_MS, async () => {
-    if (!apiKey()) {
+    if (!apiKey() || isUpstreamBlocked("odsay")) {
       return loadOdsayRouteFixture();
     }
     const url = new URL(ODSAY_BASE);
@@ -38,10 +43,19 @@ export async function searchPubTransPath(
     url.searchParams.set("EY", String(endY));
     url.searchParams.set("SearchPathType", String(searchType));
 
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) {
-      throw new Error(`ODsay fetch failed: ${res.status}`);
+    try {
+      const res = await fetchWithTimeout(url);
+      if (!res.ok) {
+        throw new Error(`ODsay fetch failed: ${res.status}`);
+      }
+      return (await res.json()) as OdsayPubTransResponse;
+    } catch (err) {
+      markUpstreamFailure("odsay");
+      console.warn(
+        "[odsay] upstream call failed, falling back to fixture for 60s:",
+        err,
+      );
+      return loadOdsayRouteFixture();
     }
-    return (await res.json()) as OdsayPubTransResponse;
   });
 }

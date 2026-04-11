@@ -33,8 +33,14 @@ export function MapCanvas({
   const destination = useTripStore((s) => s.destination);
   const pickMode = useTripStore((s) => s.pickMode);
   const compare = useTripStore((s) => s.compare);
+  const selectedMode = useTripStore((s) => s.selectedMode);
   const setOrigin = useTripStore((s) => s.setOrigin);
   const setPickMode = useTripStore((s) => s.setPickMode);
+
+  const busOpacity =
+    selectedMode === null ? 0.9 : selectedMode === "bus" ? 1 : 0.25;
+  const bikeOpacity =
+    selectedMode === null ? 0.9 : selectedMode === "bike" ? 1 : 0.25;
 
   const busPolyline =
     compare.status === "success" ? (compare.data.bus?.polyline ?? []) : [];
@@ -173,18 +179,18 @@ export function MapCanvas({
       {busPolyline.length > 1 && (
         <Polyline
           path={busPolyline}
-          strokeWeight={6}
+          strokeWeight={selectedMode === "bus" ? 8 : 6}
           strokeColor="#3b82f6"
-          strokeOpacity={0.9}
+          strokeOpacity={busOpacity}
           strokeStyle="solid"
         />
       )}
       {bikePolyline.length > 1 && (
         <Polyline
           path={bikePolyline}
-          strokeWeight={5}
+          strokeWeight={selectedMode === "bike" ? 7 : 5}
           strokeColor="#22c55e"
-          strokeOpacity={0.9}
+          strokeOpacity={bikeOpacity}
           strokeStyle="shortdash"
         />
       )}

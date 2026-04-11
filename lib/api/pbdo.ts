@@ -7,6 +7,11 @@ import type {
 } from "@/types/pbdo";
 import { memoCache } from "./cache";
 import { loadPbdoAvailabilityFixture } from "./fixtures";
+import {
+  fetchWithTimeout,
+  isUpstreamBlocked,
+  markUpstreamFailure,
+} from "./http";
 
 const PBDO_BASE = "https://apis.data.go.kr/B551982/pbdo_v2";
 const CACHE_TTL_MS = 15_000;
@@ -30,7 +35,7 @@ export async function fetchBikeStations(
   const region = params.lcgvmnInstCd ?? "ALL";
   const cacheKey = `pbdo:availability:${region}`;
   return memoCache(cacheKey, CACHE_TTL_MS, async () => {
-    if (!serviceKey()) {
+    if (!serviceKey() || isUpstreamBlocked("pbdo")) {
       return loadPbdoAvailabilityFixture();
     }
 
@@ -47,14 +52,15 @@ export async function fetchBikeStations(
     }
 
     try {
-      const res = await fetch(url, { cache: "no-store" });
+      const res = await fetchWithTimeout(url);
       if (!res.ok) {
         throw new Error(`PBDO fetch failed: ${res.status}`);
       }
       return (await res.json()) as PbdoStationAvailabilityResponse;
     } catch (err) {
+      markUpstreamFailure("pbdo");
       console.warn(
-        "[pbdo] upstream call failed, falling back to fixture:",
+        "[pbdo] upstream call failed, falling back to fixture for 60s:",
         err,
       );
       return loadPbdoAvailabilityFixture();

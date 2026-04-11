@@ -19,7 +19,11 @@ export function CompareSheet() {
   const origin = useTripStore((s) => s.origin);
   const destination = useTripStore((s) => s.destination);
   const compare = useTripStore((s) => s.compare);
+  const selectedMode = useTripStore((s) => s.selectedMode);
+  const sheetCollapsed = useTripStore((s) => s.sheetCollapsed);
   const runCompare = useTripStore((s) => s.runCompare);
+  const selectMode = useTripStore((s) => s.selectMode);
+  const toggleSheet = useTripStore((s) => s.toggleSheet);
 
   useEffect(() => {
     if (origin && destination && compare.status === "idle") {
@@ -42,67 +46,132 @@ export function CompareSheet() {
   if (!origin || !destination) return null;
 
   return (
-    <section className="pointer-events-auto mx-auto w-full max-w-2xl rounded-t-3xl border border-[color:var(--border)] bg-[color:var(--background)]/95 p-4 shadow-2xl backdrop-blur sm:rounded-3xl">
-      <header className="mb-3 flex items-center justify-between">
-        <div>
-          <p className="text-xs uppercase tracking-wider text-[color:var(--muted-foreground)]">
-            경로 비교
-          </p>
-          <h2 className="text-base font-semibold">
-            {origin.name}{" "}
-            <span className="text-[color:var(--muted-foreground)]">→</span>{" "}
-            {destination.name}
-          </h2>
-        </div>
-        {compare.status === "success" && (
-          <button
-            type="button"
-            onClick={() => void runCompare()}
-            className="rounded-full border border-[color:var(--border)] px-3 py-1 text-xs text-[color:var(--muted-foreground)]"
-          >
-            다시 계산
-          </button>
-        )}
-      </header>
+    <section
+      className="pointer-events-auto mx-auto w-full max-w-2xl rounded-t-3xl border border-[color:var(--border)] bg-[color:var(--background)]/95 shadow-2xl backdrop-blur sm:rounded-3xl"
+      aria-live="polite"
+    >
+      <button
+        type="button"
+        onClick={toggleSheet}
+        aria-expanded={!sheetCollapsed}
+        aria-label={sheetCollapsed ? "시트 펼치기" : "시트 접기"}
+        className="flex w-full items-center justify-center py-2"
+      >
+        <span className="h-1.5 w-10 rounded-full bg-[color:var(--border)]" />
+      </button>
 
-      {compare.status === "loading" && <Skeleton />}
-      {compare.status === "error" && (
-        <ErrorCard message={compare.message} onRetry={() => void runCompare()} />
-      )}
-      {compare.status === "success" && (
-        <>
-          {badge && badge.winner && (
-            <div
-              className="mb-3 rounded-2xl border border-[color:var(--border)] bg-[color:var(--muted)]/40 p-3 text-sm"
-              role="status"
-            >
-              <span className="text-[color:var(--muted-foreground)]">추천 </span>
-              <span className="font-semibold">{badge.label}</span>
-            </div>
-          )}
-          <div className="grid gap-3 sm:grid-cols-2">
-            <BusCard
-              route={compare.data.bus}
-              recommended={badge?.winner === "bus"}
-            />
-            <BikeCard
-              route={compare.data.bike}
-              recommended={badge?.winner === "bike"}
-            />
+      <div className={sheetCollapsed ? "hidden" : "px-4 pb-4"}>
+        <header className="mb-3 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs uppercase tracking-wider text-[color:var(--muted-foreground)]">
+              경로 비교
+            </p>
+            <h2 className="truncate text-base font-semibold">
+              {origin.name}{" "}
+              <span className="text-[color:var(--muted-foreground)]">→</span>{" "}
+              {destination.name}
+            </h2>
           </div>
-        </>
-      )}
+          {compare.status === "success" && (
+            <button
+              type="button"
+              onClick={() => void runCompare()}
+              className="shrink-0 rounded-full border border-[color:var(--border)] px-3 py-1 text-xs text-[color:var(--muted-foreground)]"
+            >
+              다시 계산
+            </button>
+          )}
+        </header>
+
+        {(compare.status === "idle" || compare.status === "loading") && (
+          <LoadingState />
+        )}
+        {compare.status === "error" && (
+          <ErrorCard
+            message={compare.message}
+            onRetry={() => void runCompare()}
+          />
+        )}
+        {compare.status === "success" && (
+          <>
+            {badge && badge.winner && (
+              <div
+                className="mb-3 rounded-2xl border border-[color:var(--border)] bg-[color:var(--muted)]/40 p-3 text-sm"
+                role="status"
+              >
+                <span className="text-[color:var(--muted-foreground)]">
+                  추천{" "}
+                </span>
+                <span className="font-semibold">{badge.label}</span>
+              </div>
+            )}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <BusCard
+                route={compare.data.bus}
+                recommended={badge?.winner === "bus"}
+                selected={selectedMode === "bus"}
+                dimmed={selectedMode !== null && selectedMode !== "bus"}
+                onSelect={() => selectMode("bus")}
+              />
+              <BikeCard
+                route={compare.data.bike}
+                recommended={badge?.winner === "bike"}
+                selected={selectedMode === "bike"}
+                dimmed={selectedMode !== null && selectedMode !== "bike"}
+                onSelect={() => selectMode("bike")}
+              />
+            </div>
+          </>
+        )}
+      </div>
     </section>
   );
 }
 
+function LoadingState() {
+  return (
+    <div
+      className="flex flex-col items-center gap-3 py-6 text-sm text-[color:var(--muted-foreground)]"
+      role="status"
+      aria-live="polite"
+    >
+      <div className="flex items-center gap-3">
+        <span
+          className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-[color:var(--border)] border-t-[color:var(--foreground)]"
+          aria-hidden
+        />
+        <span>경로를 계산하고 있어요…</span>
+      </div>
+      <p className="text-xs text-[color:var(--muted-foreground)]/80">
+        버스 경로와 공영자전거 거치대를 동시에 확인하는 중입니다.
+      </p>
+      <div className="mt-2 grid w-full gap-3 sm:grid-cols-2">
+        {[0, 1].map((i) => (
+          <div
+            key={i}
+            className="h-28 animate-pulse rounded-2xl bg-[color:var(--muted)]"
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+type CardProps<R> = {
+  route: R;
+  recommended: boolean;
+  selected: boolean;
+  dimmed: boolean;
+  onSelect: () => void;
+};
+
 function BusCard({
   route,
   recommended,
-}: {
-  route: BusRoute;
-  recommended: boolean;
-}) {
+  selected,
+  dimmed,
+  onSelect,
+}: CardProps<BusRoute>) {
   if (route.isServiceEnded || route.totalDurationSec === 0) {
     return (
       <article className="rounded-2xl border border-[color:var(--border)] p-4 opacity-70">
@@ -113,33 +182,41 @@ function BusCard({
       </article>
     );
   }
+  const { className, style } = cardStyle({
+    accent: "var(--accent-bus)",
+    recommended,
+    selected,
+    dimmed,
+  });
   return (
-    <article
-      className={`rounded-2xl border p-4 transition-colors ${
-        recommended
-          ? "border-[color:var(--accent-bus)] bg-[color:var(--accent-bus)]/10"
-          : "border-[color:var(--border)] bg-[color:var(--muted)]/40"
-      }`}
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={selected}
+      className={className}
+      style={style}
     >
       <CardHeader mode="bus" label="버스" recommended={recommended} />
       <BigDuration sec={route.totalDurationSec} />
       <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-[color:var(--muted-foreground)]">
         <dt>도보</dt>
-        <dd className="text-right">{Math.round(route.walkDurationSec / 60)}분</dd>
+        <dd className="text-right">
+          {Math.round(route.walkDurationSec / 60)}분
+        </dd>
         <dt>환승</dt>
         <dd className="text-right">{route.transferCount}회</dd>
       </dl>
-    </article>
+    </button>
   );
 }
 
 function BikeCard({
   route,
   recommended,
-}: {
-  route: BikeRoute;
-  recommended: boolean;
-}) {
+  selected,
+  dimmed,
+  onSelect,
+}: CardProps<BikeRoute>) {
   if (!route.isAvailable) {
     return (
       <article className="rounded-2xl border border-[color:var(--border)] p-4 opacity-70">
@@ -150,13 +227,19 @@ function BikeCard({
       </article>
     );
   }
+  const { className, style } = cardStyle({
+    accent: "var(--accent-bike)",
+    recommended,
+    selected,
+    dimmed,
+  });
   return (
-    <article
-      className={`rounded-2xl border p-4 transition-colors ${
-        recommended
-          ? "border-[color:var(--accent-bike)] bg-[color:var(--accent-bike)]/10"
-          : "border-[color:var(--border)] bg-[color:var(--muted)]/40"
-      }`}
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={selected}
+      className={className}
+      style={style}
     >
       <CardHeader mode="bike" label="자전거" recommended={recommended} />
       <BigDuration sec={route.totalDurationSec} />
@@ -166,16 +249,49 @@ function BikeCard({
           {Math.round(route.rideDistanceMeters / 100) / 10} km
         </dd>
         <dt>도보</dt>
-        <dd className="text-right">{Math.round(route.walkDurationSec / 60)}분</dd>
-        <dt>대여</dt>
         <dd className="text-right">
+          {Math.round(route.walkDurationSec / 60)}분
+        </dd>
+        <dt>대여</dt>
+        <dd className="truncate text-right">
           {route.fromStationName ?? "-"} · {route.fromStationBikesAvailable}대
         </dd>
         <dt>반납</dt>
-        <dd className="text-right">{route.toStationName ?? "-"}</dd>
+        <dd className="truncate text-right">{route.toStationName ?? "-"}</dd>
       </dl>
-    </article>
+    </button>
   );
+}
+
+function cardStyle({
+  accent,
+  recommended,
+  selected,
+  dimmed,
+}: {
+  accent: string;
+  recommended: boolean;
+  selected: boolean;
+  dimmed: boolean;
+}): { className: string; style: React.CSSProperties } {
+  const emphasized = selected || recommended;
+  const className = [
+    "w-full rounded-2xl border p-4 text-left transition-all",
+    "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[color:var(--foreground)]/60",
+    emphasized ? "shadow-lg" : "",
+    dimmed && !selected ? "opacity-50" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const style: React.CSSProperties = {
+    borderColor: emphasized ? accent : "var(--border)",
+    background: emphasized
+      ? `color-mix(in srgb, ${accent} 14%, transparent)`
+      : "color-mix(in srgb, var(--muted) 40%, transparent)",
+  };
+
+  return { className, style };
 }
 
 function CardHeader({
@@ -198,10 +314,7 @@ function CardHeader({
       {recommended && (
         <span
           className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
-          style={{
-            background: color,
-            color: "var(--background)",
-          }}
+          style={{ background: color, color: "var(--background)" }}
         >
           추천
         </span>
@@ -220,19 +333,6 @@ function BigDuration({ sec }: { sec: number }) {
   );
 }
 
-function Skeleton() {
-  return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      {[0, 1].map((i) => (
-        <div
-          key={i}
-          className="h-32 animate-pulse rounded-2xl bg-[color:var(--muted)]"
-        />
-      ))}
-    </div>
-  );
-}
-
 function ErrorCard({
   message,
   onRetry,
@@ -245,7 +345,9 @@ function ErrorCard({
       <p className="font-medium text-[color:var(--danger)]">
         경로를 불러오지 못했습니다
       </p>
-      <p className="mt-1 text-xs text-[color:var(--muted-foreground)]">{message}</p>
+      <p className="mt-1 text-xs text-[color:var(--muted-foreground)]">
+        {message}
+      </p>
       <button
         type="button"
         onClick={onRetry}

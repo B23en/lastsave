@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import type { BikeRoute, BusRoute, Coord } from "@/types/trip";
+import type { BikeRoute, BusRoute, Coord, RouteMode } from "@/types/trip";
 
 export type Place = {
   id: string;
@@ -35,11 +35,15 @@ export type TripState = {
   locationStatus: LocationStatus;
   pickMode: "none" | "origin";
   compare: CompareState;
+  selectedMode: RouteMode | null;
+  sheetCollapsed: boolean;
 
   setOrigin: (place: Place | null) => void;
   setDestination: (place: Place | null) => void;
   setLocationStatus: (status: LocationStatus) => void;
   setPickMode: (mode: "none" | "origin") => void;
+  selectMode: (mode: RouteMode) => void;
+  toggleSheet: () => void;
   runCompare: () => Promise<void>;
   resetTrip: () => void;
 };
@@ -50,12 +54,26 @@ export const useTripStore = create<TripState>((set, get) => ({
   locationStatus: { kind: "idle" },
   pickMode: "none",
   compare: { status: "idle" },
+  selectedMode: null,
+  sheetCollapsed: false,
 
-  setOrigin: (place) => set({ origin: place, compare: { status: "idle" } }),
+  setOrigin: (place) =>
+    set({
+      origin: place,
+      compare: { status: "idle" },
+      selectedMode: null,
+    }),
   setDestination: (place) =>
-    set({ destination: place, compare: { status: "idle" } }),
+    set({
+      destination: place,
+      compare: { status: "idle" },
+      selectedMode: null,
+    }),
   setLocationStatus: (status) => set({ locationStatus: status }),
   setPickMode: (mode) => set({ pickMode: mode }),
+  selectMode: (mode) =>
+    set((s) => ({ selectedMode: s.selectedMode === mode ? null : mode })),
+  toggleSheet: () => set((s) => ({ sheetCollapsed: !s.sheetCollapsed })),
 
   runCompare: async () => {
     const { origin, destination } = get();
@@ -95,6 +113,8 @@ export const useTripStore = create<TripState>((set, get) => ({
       destination: null,
       pickMode: "none",
       compare: { status: "idle" },
+      selectedMode: null,
+      sheetCollapsed: false,
     }),
 }));
 

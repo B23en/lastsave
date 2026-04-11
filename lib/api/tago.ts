@@ -3,6 +3,11 @@ import "server-only";
 import type { TagoBusResponse } from "@/types/tago";
 import { memoCache } from "./cache";
 import { loadBusPositionsFixture } from "./fixtures";
+import {
+  fetchWithTimeout,
+  isUpstreamBlocked,
+  markUpstreamFailure,
+} from "./http";
 
 const TAGO_BUS_BASE =
   "https://apis.data.go.kr/1613000/BusLcInfoInqireService";
@@ -23,7 +28,7 @@ export async function fetchBusPositions(
 ): Promise<TagoBusResponse> {
   const cacheKey = `tago:bus:${params.cityCode}:${params.routeId}`;
   return memoCache(cacheKey, CACHE_TTL_MS, async () => {
-    if (!serviceKey()) {
+    if (!serviceKey() || isUpstreamBlocked("tago")) {
       return loadBusPositionsFixture();
     }
     const url = new URL(`${TAGO_BUS_BASE}/getRouteAcctoBusLcList`);
@@ -35,13 +40,17 @@ export async function fetchBusPositions(
     url.searchParams.set("_type", "json");
 
     try {
-      const res = await fetch(url, { cache: "no-store" });
+      const res = await fetchWithTimeout(url);
       if (!res.ok) {
         throw new Error(`TAGO bus fetch failed: ${res.status}`);
       }
       return (await res.json()) as TagoBusResponse;
     } catch (err) {
-      console.warn("[tago] upstream call failed, falling back to fixture:", err);
+      markUpstreamFailure("tago");
+      console.warn(
+        "[tago] upstream call failed, falling back to fixture for 60s:",
+        err,
+      );
       return loadBusPositionsFixture();
     }
   });
