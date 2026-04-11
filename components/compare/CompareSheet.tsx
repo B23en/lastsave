@@ -49,6 +49,8 @@ export function CompareSheet() {
     <section
       className="pointer-events-auto mx-auto w-full max-w-2xl rounded-t-3xl border border-[color:var(--border)] bg-[color:var(--background)]/95 shadow-2xl backdrop-blur sm:rounded-3xl"
       aria-live="polite"
+      aria-label="경로 비교 결과"
+      role="region"
     >
       <button
         type="button"
