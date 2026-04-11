@@ -3,7 +3,20 @@ import { cacheClear } from "@/lib/api/cache";
 import { GET as getBusPositions } from "@/app/api/bus/positions/route";
 import { GET as getBikeStations } from "@/app/api/bike/stations/route";
 import { GET as getCompare } from "@/app/api/route/compare/route";
+import { GET as getKakaoSearch } from "@/app/api/kakao/search/route";
 import type { TagoBikeResponse, TagoBusResponse } from "@/types/tago";
+
+type KakaoSearchBody = {
+  query: string;
+  suggestions: Array<{
+    id: string;
+    name: string;
+    address: string;
+    category: string;
+    lat: number;
+    lng: number;
+  }>;
+};
 
 const busReq = (qs = "") =>
   new Request(`http://localhost/api/bus/positions${qs}`);
@@ -82,5 +95,36 @@ describe("GET /api/route/compare", () => {
     expect(res.status).toBe(501);
     const body = (await res.json()) as { error: string };
     expect(body.error).toBe("not_implemented");
+  });
+});
+
+describe("GET /api/kakao/search", () => {
+  beforeEach(() => {
+    cacheClear();
+    delete process.env.KAKAO_REST_KEY;
+  });
+
+  const searchReq = (qs: string) =>
+    new Request(`http://localhost/api/kakao/search${qs}`);
+
+  it("maps Kakao documents into flat suggestions", async () => {
+    const res = await getKakaoSearch(searchReq("?q=강남역"));
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as KakaoSearchBody;
+    expect(body.query).toBe("강남역");
+    expect(body.suggestions.length).toBeGreaterThan(0);
+    const first = body.suggestions[0]!;
+    expect(first.name).toBeTypeOf("string");
+    expect(first.lat).toBeTypeOf("number");
+    expect(first.lng).toBeTypeOf("number");
+    expect(Number.isFinite(first.lat)).toBe(true);
+    expect(Number.isFinite(first.lng)).toBe(true);
+  });
+
+  it("returns empty suggestions for blank query", async () => {
+    const res = await getKakaoSearch(searchReq("?q="));
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as KakaoSearchBody;
+    expect(body.suggestions).toEqual([]);
   });
 });

@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import type { TagoBikeResponse, TagoBusResponse } from "@/types/tago";
 import type { OdsayPubTransResponse } from "@/types/odsay";
+import type { KakaoKeywordSearchResponse } from "@/types/kakao";
 
 const FIXTURE_DIR = path.resolve(process.cwd(), "tests/fixtures");
 
@@ -22,4 +23,8 @@ export function loadBikeStationsFixture(): Promise<TagoBikeResponse> {
 
 export function loadOdsayRouteFixture(): Promise<OdsayPubTransResponse> {
   return loadJson<OdsayPubTransResponse>("odsay-route.json");
+}
+
+export function loadKakaoKeywordSearchFixture(): Promise<KakaoKeywordSearchResponse> {
+  return loadJson<KakaoKeywordSearchResponse>("kakao-keyword-search.json");
 }

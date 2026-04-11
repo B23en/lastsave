@@ -1,4 +1,9 @@
 import ClientMapCanvas from "@/components/map/ClientMapCanvas";
+import {
+  LocationGate,
+  LocationStatusBadge,
+} from "@/components/location/LocationGate";
+import { SearchBar } from "@/components/search/SearchBar";
 
 export default function Home() {
   return (
@@ -7,14 +12,18 @@ export default function Home() {
         <ClientMapCanvas />
       </div>
 
-      <header className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center p-4">
+      <LocationGate />
+
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-col items-center gap-3 p-4">
         <div className="pointer-events-auto rounded-full border border-[color:var(--border)] bg-[color:var(--background)]/85 px-4 py-2 text-sm font-semibold shadow-sm backdrop-blur">
           막차세이브{" "}
           <span className="text-[color:var(--muted-foreground)]">
             · LastSave
           </span>
         </div>
-      </header>
+        <SearchBar />
+        <LocationStatusBadge />
+      </div>
     </main>
   );
 }
