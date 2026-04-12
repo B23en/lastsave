@@ -518,20 +518,17 @@ function CoachSection({
       )}
 
       {state.status === "done" && (
-        <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--muted)]/40 p-4">
+        <button
+          type="button"
+          onClick={() => setState({ status: "idle" })}
+          className="w-full rounded-2xl border border-[color:var(--border)] bg-[color:var(--muted)]/40 p-4 text-left transition-colors hover:bg-[color:var(--muted)]/70"
+        >
           <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-[color:var(--muted-foreground)]">
             <span aria-hidden>&#x2728;</span>
             AI 귀가 코칭
           </div>
           <p className="text-sm leading-relaxed">{state.text}</p>
-          <button
-            type="button"
-            onClick={() => void handleClick()}
-            className="mt-2 text-xs text-[color:var(--muted-foreground)] underline decoration-dotted"
-          >
-            다시 분석
-          </button>
-        </div>
+        </button>
       )}
 
       {state.status === "error" && (
