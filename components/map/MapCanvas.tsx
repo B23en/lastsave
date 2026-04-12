@@ -170,9 +170,19 @@ export function MapCanvas({
             src:
               "data:image/svg+xml;utf8," +
               encodeURIComponent(
-                `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><circle cx="16" cy="16" r="10" fill="#22c55e" stroke="white" stroke-width="3"/></svg>`,
+                [
+                  `<svg xmlns="http://www.w3.org/2000/svg" width="48" height="58" viewBox="0 0 48 58">`,
+                  `<style>@keyframes pulse{0%,100%{r:20;opacity:.25}50%{r:24;opacity:0}}circle.ring{animation:pulse 2s ease-in-out infinite}</style>`,
+                  `<circle class="ring" cx="24" cy="24" r="20" fill="#22c55e" opacity=".25"/>`,
+                  `<circle cx="24" cy="24" r="12" fill="#22c55e" stroke="white" stroke-width="3"/>`,
+                  `<circle cx="24" cy="24" r="5" fill="white"/>`,
+                  `<rect x="6" y="40" width="36" height="16" rx="8" fill="#22c55e"/>`,
+                  `<text x="24" y="52" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="white">출발</text>`,
+                  `</svg>`,
+                ].join(""),
               ),
-            size: { width: 32, height: 32 },
+            size: { width: 48, height: 58 },
+            options: { offset: { x: 24, y: 44 } },
           }}
         />
       )}
@@ -184,10 +194,17 @@ export function MapCanvas({
             src:
               "data:image/svg+xml;utf8," +
               encodeURIComponent(
-                `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40"><path d="M16 2c-7 0-12 5-12 12 0 9 12 24 12 24s12-15 12-24c0-7-5-12-12-12z" fill="#ef4444" stroke="white" stroke-width="2"/><circle cx="16" cy="14" r="4" fill="white"/></svg>`,
+                [
+                  `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="62" viewBox="0 0 44 62">`,
+                  `<path d="M22 2C12 2 4 10 4 20c0 14 18 36 18 36s18-22 18-36c0-10-8-18-18-18z" fill="#ef4444" stroke="white" stroke-width="3"/>`,
+                  `<circle cx="22" cy="20" r="6" fill="white"/>`,
+                  `<rect x="6" y="46" width="32" height="14" rx="7" fill="#ef4444"/>`,
+                  `<text x="22" y="56" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" font-weight="700" fill="white">도착</text>`,
+                  `</svg>`,
+                ].join(""),
               ),
-            size: { width: 32, height: 40 },
-            options: { offset: { x: 16, y: 40 } },
+            size: { width: 44, height: 62 },
+            options: { offset: { x: 22, y: 52 } },
           }}
         />
       )}
