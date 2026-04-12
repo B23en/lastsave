@@ -15,6 +15,7 @@ import type { Coord } from "@/types/trip";
 import { KAKAO_MAP_KEY, SEOUL_CITY_HALL } from "@/lib/config";
 import { useTripStore } from "@/lib/store/useTripStore";
 import { useBusPositions } from "@/lib/hooks/useBusPositions";
+import { interpolateBikePolyline } from "@/lib/domain/interpolate";
 
 type MapCanvasProps = {
   fallbackCenter?: Coord;
@@ -52,6 +53,7 @@ export function MapCanvas({
     !compare.data.bus.isServiceEnded &&
     selectedMode === "bus";
   const { data: busLive } = useBusPositions({
+    originCoord: origin?.coord,
     rteNo: busRouteName,
     enabled: busPositionsEnabled,
   });
@@ -59,10 +61,12 @@ export function MapCanvas({
 
   const busPolyline =
     compare.status === "success" ? (compare.data.bus?.polyline ?? []) : [];
-  const bikePolyline =
-    compare.status === "success" && compare.data.bike.isAvailable
-      ? compare.data.bike.polyline
-      : [];
+  const bikePolyline = useMemo(() => {
+    if (compare.status !== "success" || !compare.data.bike.isAvailable) {
+      return [];
+    }
+    return interpolateBikePolyline(compare.data.bike.polyline);
+  }, [compare]);
   const bikeStations =
     compare.status === "success" && compare.data.bike.isAvailable
       ? [

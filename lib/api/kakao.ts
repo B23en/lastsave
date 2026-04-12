@@ -6,6 +6,8 @@ import { loadKakaoKeywordSearchFixture } from "./fixtures";
 
 const KAKAO_KEYWORD_URL =
   "https://dapi.kakao.com/v2/local/search/keyword.json";
+const KAKAO_COORD2REGION_URL =
+  "https://dapi.kakao.com/v2/local/geo/coord2regioncode.json";
 const CACHE_TTL_MS = 60_000;
 
 const restKey = () => process.env.KAKAO_REST_KEY ?? "";
@@ -59,5 +61,47 @@ export async function searchKeyword(
       throw new Error(`Kakao keyword search failed: ${res.status}`);
     }
     return (await res.json()) as KakaoKeywordSearchResponse;
+  });
+}
+
+/**
+ * 카카오 역지오코딩: 좌표 → 법정동 코드(10자리).
+ * 시/도 단위 코드(앞 2자리 + 00000000)를 반환하여 stdgCd 로 사용한다.
+ */
+export async function coordToRegionCode(
+  lat: number,
+  lng: number,
+): Promise<string | null> {
+  const cacheKey = `kakao:region:${lat.toFixed(3)}:${lng.toFixed(3)}`;
+  return memoCache(cacheKey, 300_000, async () => {
+    if (!restKey()) return null;
+
+    const url = new URL(KAKAO_COORD2REGION_URL);
+    url.searchParams.set("x", String(lng));
+    url.searchParams.set("y", String(lat));
+    url.searchParams.set("input_coord", "WGS84");
+
+    try {
+      const res = await fetch(url, {
+        headers: { Authorization: `KakaoAK ${restKey()}` },
+        cache: "no-store",
+      });
+      if (!res.ok) return null;
+      const data = (await res.json()) as {
+        documents: Array<{
+          region_type: string;
+          code: string;
+          region_1depth_name: string;
+        }>;
+      };
+      // region_type === "B" 가 법정동 결과
+      const bDoc = data.documents.find((d) => d.region_type === "B");
+      if (!bDoc) return null;
+      // 시/도 단위 코드로 변환: 앞 2자리 + "00000000"
+      const sido = bDoc.code.slice(0, 2);
+      return `${sido}00000000`;
+    } catch {
+      return null;
+    }
   });
 }

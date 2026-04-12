@@ -3,13 +3,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSyncExternalStore } from "react";
 import type { LiveBus } from "@/types/trip";
+import type { Coord } from "@/types/trip";
 
-type Response = { buses: LiveBus[]; resultCode?: string };
+type BusResponse = { buses: LiveBus[]; resultCode?: string };
+type RegionResponse = { stdgCd: string; fallback: boolean };
 
 export type BusPositionsInput = {
-  /** 지자체 법정동 코드 10자리. 기본 서울 1100000000. */
-  stdgCd?: string;
-  /** 사용자 노출 노선번호 (예: "N16"). 지정 시 해당 노선만 표시. */
+  /** 사용자 위치 — 자동 지역 감지에 사용 */
+  originCoord?: Coord | null;
+  /** 노선 번호 필터 (예: "N16") */
   rteNo?: string;
   enabled?: boolean;
 };
@@ -17,19 +19,39 @@ export type BusPositionsInput = {
 const REFETCH_MS = 15_000;
 
 /**
- * 실시간 버스 위치를 15초 간격으로 polling 한다.
- * 탭이 백그라운드로 가면 polling 을 중단하고, 돌아오면 재개한다.
+ * 1) origin 좌표로 /api/region 호출 → stdgCd 자동 결정
+ * 2) /api/bus/positions?stdgCd=...&rteNo=... 를 15초마다 polling
  */
 export function useBusPositions({
-  stdgCd = "1100000000",
+  originCoord,
   rteNo,
   enabled = true,
 }: BusPositionsInput) {
   const visible = useVisible();
 
-  return useQuery<Response>({
+  const regionQuery = useQuery<RegionResponse>({
+    queryKey: [
+      "region",
+      originCoord?.lat.toFixed(2) ?? "",
+      originCoord?.lng.toFixed(2) ?? "",
+    ],
+    enabled: enabled && !!originCoord,
+    staleTime: 300_000,
+    queryFn: async () => {
+      if (!originCoord) return { stdgCd: "1100000000", fallback: true };
+      const res = await fetch(
+        `/api/region?lat=${originCoord.lat}&lng=${originCoord.lng}`,
+      );
+      if (!res.ok) return { stdgCd: "1100000000", fallback: true };
+      return (await res.json()) as RegionResponse;
+    },
+  });
+
+  const stdgCd = regionQuery.data?.stdgCd ?? "1100000000";
+
+  const busQuery = useQuery<BusResponse>({
     queryKey: ["bus-positions", stdgCd, rteNo ?? ""],
-    enabled: enabled && visible,
+    enabled: enabled && visible && !!regionQuery.data,
     refetchInterval: visible ? REFETCH_MS : false,
     refetchIntervalInBackground: false,
     queryFn: async () => {
@@ -42,9 +64,11 @@ export function useBusPositions({
       if (!res.ok) {
         throw new Error(`bus positions failed: ${res.status}`);
       }
-      return (await res.json()) as Response;
+      return (await res.json()) as BusResponse;
     },
   });
+
+  return { ...busQuery, stdgCd };
 }
 
 function subscribeVisibility(onChange: () => void): () => void {
