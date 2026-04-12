@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useTripStore } from "@/lib/store/useTripStore";
+import { useBusPositions } from "@/lib/hooks/useBusPositions";
 import { computeRisk } from "@/lib/domain/risk";
+import { estimateBusEta, firstTransitRouteName, type BusEtaResult } from "@/lib/domain/busEta";
 import { lastBusEtaSec, nextLastBusDeparture } from "@/lib/domain/lastBus";
 import type { RiskLevel } from "@/types/trip";
 
@@ -10,12 +12,25 @@ const TICK_MS = 30_000;
 
 /**
  * 사용자가 버스 카드를 선택했을 때, 막차 놓칠 위험을 상단 배너로 알린다.
+ * 실시간 버스 위치 데이터가 있으면 해당 ETA로 리스크를 보정한다.
  * 디버그: URL 쿼리 `?now=23:55` 로 현재 시각을 가상 설정할 수 있다.
  */
 export function RiskBanner() {
+  const origin = useTripStore((s) => s.origin);
   const compare = useTripStore((s) => s.compare);
   const selectedMode = useTripStore((s) => s.selectedMode);
   const selectMode = useTripStore((s) => s.selectMode);
+
+  const busRouteName =
+    compare.status === "success"
+      ? firstTransitRouteName(compare.data.bus.legs)
+      : undefined;
+
+  const { data: busLive } = useBusPositions({
+    originCoord: origin?.coord,
+    rteNo: busRouteName,
+    enabled: selectedMode === "bus",
+  });
 
   const [now, setNow] = useState<Date>(() => resolveNow());
 
@@ -24,12 +39,24 @@ export function RiskBanner() {
     return () => clearInterval(t);
   }, []);
 
+  // 실시간 버스 ETA 계산
+  const liveEta = useMemo(() => {
+    if (!busLive?.buses?.length || !origin?.coord) return null;
+    return estimateBusEta({
+      liveBuses: busLive.buses,
+      stopCoord: origin.coord,
+      routeName: busRouteName,
+    });
+  }, [busLive, origin?.coord, busRouteName]);
+
   const level = useMemo<RiskLevel | "ended" | null>(() => {
     if (compare.status !== "success") return null;
     const bus = compare.data.bus;
     if (bus.isServiceEnded || bus.totalDurationSec === 0) return "ended";
 
     const walkSec = firstWalkSec(bus.legs) ?? bus.walkDurationSec;
+
+    // 리스크 계산은 항상 막차 시각 기반 (liveEta는 배너 표시 전용)
     const busEta = lastBusEtaSec(now);
     const lastBusAt = nextLastBusDeparture(now);
     return computeRisk({
@@ -38,12 +65,12 @@ export function RiskBanner() {
       lastBusAt,
       now,
     });
-  }, [compare, now]);
+  }, [compare, now, liveEta]);
 
   if (selectedMode !== "bus" || level === null) return null;
   if (level === "safe") return null;
 
-  const copy = describe(level, now);
+  const copy = describe(level, now, liveEta);
 
   return (
     <div
@@ -87,7 +114,15 @@ type Copy = {
   text: string;
 };
 
-function describe(level: Level, now: Date): Copy {
+function describe(
+  level: Level,
+  now: Date,
+  liveEta: BusEtaResult | null,
+): Copy {
+  const liveHint = liveEta
+    ? ` (${liveEta.routeName} 약 ${Math.round(liveEta.distanceMeters)}m, ${Math.ceil(liveEta.etaSec / 60)}분 후 도착)`
+    : "";
+
   switch (level) {
     case "ended":
       return {
@@ -102,7 +137,7 @@ function describe(level: Level, now: Date): Copy {
       return {
         icon: "🚨",
         title: "막차 놓칠 가능성 높음",
-        subtitle: `${formatKstClock(now)} 기준 여유 시간이 2분 미만입니다. 자전거 경로를 권장합니다.`,
+        subtitle: `${formatKstClock(now)} 기준 여유 시간이 2분 미만입니다.${liveHint} 자전거 경로를 권장합니다.`,
         border: "var(--danger)",
         background: "color-mix(in srgb, var(--danger) 15%, var(--background))",
         text: "var(--danger)",
@@ -111,14 +146,13 @@ function describe(level: Level, now: Date): Copy {
       return {
         icon: "⚠️",
         title: "시간 빠듯함",
-        subtitle: `${formatKstClock(now)} 기준 여유 시간이 5분 이내입니다. 자전거도 고려해보세요.`,
+        subtitle: `${formatKstClock(now)} 기준 여유 시간이 5분 이내입니다.${liveHint} 자전거도 고려해보세요.`,
         border: "var(--warning)",
         background: "color-mix(in srgb, var(--warning) 15%, var(--background))",
         text: "var(--warning)",
       };
     case "safe":
     default:
-      // not rendered — kept for exhaustiveness
       return {
         icon: "✅",
         title: "",

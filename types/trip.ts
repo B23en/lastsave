@@ -64,4 +64,6 @@ export type LiveBus = {
   stationName?: string;
   lat: number;
   lng: number;
+  /** 운행 속도 (km/h). 실시간 API에서 제공. */
+  oprSpd?: number;
 };

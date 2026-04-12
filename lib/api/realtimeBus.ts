@@ -102,6 +102,7 @@ function toLiveBus(raw: RealtimeBusLocationItem): LiveBus | null {
   const lat = Number(raw.lat);
   const lng = Number(raw.lot);
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  const oprSpd = Number(raw.oprSpd);
   return {
     routeId: raw.rteId,
     routeName: raw.rteNo,
@@ -109,5 +110,6 @@ function toLiveBus(raw: RealtimeBusLocationItem): LiveBus | null {
     stationName: undefined,
     lat,
     lng,
+    oprSpd: Number.isFinite(oprSpd) && oprSpd > 0 ? oprSpd : undefined,
   };
 }

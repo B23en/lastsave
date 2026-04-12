@@ -16,6 +16,7 @@ import { KAKAO_MAP_KEY, SEOUL_CITY_HALL } from "@/lib/config";
 import { useTripStore } from "@/lib/store/useTripStore";
 import { useBusPositions } from "@/lib/hooks/useBusPositions";
 import { interpolateBikePolyline } from "@/lib/domain/interpolate";
+import { firstTransitRouteName } from "@/lib/domain/busEta";
 
 type MapCanvasProps = {
   fallbackCenter?: Coord;
@@ -46,7 +47,7 @@ export function MapCanvas({
 
   const busRouteName =
     compare.status === "success"
-      ? firstBusLaneName(compare.data.bus.legs)
+      ? firstTransitRouteName(compare.data.bus.legs)
       : undefined;
   const busPositionsEnabled =
     compare.status === "success" &&
@@ -254,9 +255,9 @@ export function MapCanvas({
             src:
               "data:image/svg+xml;utf8," +
               encodeURIComponent(
-                `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28"><circle cx="14" cy="14" r="11" fill="#3b82f6" stroke="white" stroke-width="3"/><text x="14" y="18" text-anchor="middle" font-family="system-ui" font-size="11" font-weight="700" fill="white">버</text></svg>`,
+                `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32"><circle cx="16" cy="16" r="14" fill="#3b82f6" stroke="white" stroke-width="3"/><text x="16" y="22" text-anchor="middle" font-size="16">🚌</text></svg>`,
               ),
-            size: { width: 28, height: 28 },
+            size: { width: 32, height: 32 },
           }}
         />
       ))}
@@ -265,17 +266,6 @@ export function MapCanvas({
       )}
     </Map>
   );
-}
-
-function firstBusLaneName(
-  legs: { kind: string; routeName?: string }[],
-): string | undefined {
-  for (const leg of legs) {
-    if (leg.kind === "bus" && leg.routeName) {
-      return leg.routeName;
-    }
-  }
-  return undefined;
 }
 
 function MapSkeleton() {

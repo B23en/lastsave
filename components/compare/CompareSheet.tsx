@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTripStore } from "@/lib/store/useTripStore";
+import { useBusPositions } from "@/lib/hooks/useBusPositions";
 import { computeRisk } from "@/lib/domain/risk";
 import { recommend } from "@/lib/domain/recommend";
+import { estimateBusEta, firstTransitRouteName, type BusEtaResult } from "@/lib/domain/busEta";
+import type { CoachInput } from "@/lib/domain/coachPrompt";
 import type {
   BikeRoute,
   BusRoute,
@@ -25,23 +28,47 @@ export function CompareSheet() {
   const selectMode = useTripStore((s) => s.selectMode);
   const toggleSheet = useTripStore((s) => s.toggleSheet);
 
+  const busRouteName =
+    compare.status === "success"
+      ? firstTransitRouteName(compare.data.bus.legs)
+      : undefined;
+
+  const { data: busLive } = useBusPositions({
+    originCoord: origin?.coord,
+    rteNo: busRouteName,
+    enabled: compare.status === "success" && !compare.data.bus.isServiceEnded,
+  });
+
+  // 실시간 버스 ETA
+  const liveEta = useMemo<BusEtaResult | null>(() => {
+    if (!busLive?.buses?.length || !origin?.coord) return null;
+    return estimateBusEta({
+      liveBuses: busLive.buses,
+      stopCoord: origin.coord,
+      routeName: busRouteName,
+    });
+  }, [busLive, origin?.coord, busRouteName]);
+
   useEffect(() => {
     if (origin && destination && compare.status === "idle") {
       void runCompare();
     }
   }, [origin, destination, compare.status, runCompare]);
 
+  const riskLevel = useMemo(() => {
+    if (compare.status !== "success") return "safe" as const;
+    const bus = compare.data.bus;
+    return computeRisk({
+      walkSec: bus.walkDurationSec,
+      busEtaSec: Math.max(bus.totalDurationSec - bus.walkDurationSec, 0),
+    });
+  }, [compare]);
+
   const badge = useMemo<RecommendationBadge | null>(() => {
     if (compare.status !== "success") return null;
     const { bus, bike } = compare.data;
-    const busWalkSec = bus.walkDurationSec;
-    const busEtaSec = bus.totalDurationSec - bus.walkDurationSec;
-    const risk = computeRisk({
-      walkSec: busWalkSec,
-      busEtaSec: Math.max(busEtaSec, 0),
-    });
-    return recommend({ bus, bike, risk });
-  }, [compare]);
+    return recommend({ bus, bike, risk: riskLevel });
+  }, [compare, riskLevel]);
 
   if (!origin || !destination) return null;
 
@@ -115,6 +142,7 @@ export function CompareSheet() {
                 selected={selectedMode === "bus"}
                 dimmed={selectedMode !== null && selectedMode !== "bus"}
                 onSelect={() => selectMode("bus")}
+                liveEta={liveEta}
               />
               <BikeCard
                 route={compare.data.bike}
@@ -124,6 +152,14 @@ export function CompareSheet() {
                 onSelect={() => selectMode("bike")}
               />
             </div>
+            <CoachSection
+              origin={origin}
+              destination={destination}
+              bus={compare.data.bus}
+              bike={compare.data.bike}
+              riskLevel={riskLevel}
+              liveEta={liveEta}
+            />
           </>
         )}
       </div>
@@ -174,7 +210,8 @@ function BusCard({
   selected,
   dimmed,
   onSelect,
-}: CardProps<BusRoute>) {
+  liveEta,
+}: CardProps<BusRoute> & { liveEta?: BusEtaResult | null }) {
   if (route.isServiceEnded || route.totalDurationSec === 0) {
     return (
       <article className="rounded-2xl border border-[color:var(--border)] p-4 opacity-70">
@@ -209,6 +246,16 @@ function BusCard({
         </dd>
         <dt>환승</dt>
         <dd className="text-right">{route.transferCount}회</dd>
+        {liveEta && (
+          <>
+            <dt className="text-[color:var(--accent-bus)]">실시간</dt>
+            <dd className="text-right text-[color:var(--accent-bus)]">
+              {liveEta.etaSec < 60
+                ? "곧 도착"
+                : `약 ${Math.ceil(liveEta.etaSec / 60)}분 후 도착`}
+            </dd>
+          </>
+        )}
       </dl>
     </button>
   );
@@ -371,6 +418,141 @@ function BigDuration({ sec }: { sec: number }) {
     </div>
   );
 }
+
+/* ── AI 귀가 코칭 ─────────────────────────────────── */
+
+type CoachState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "done"; text: string }
+  | { status: "error" };
+
+function CoachSection({
+  origin,
+  destination,
+  bus,
+  bike,
+  riskLevel,
+  liveEta,
+}: {
+  origin: { name: string };
+  destination: { name: string };
+  bus: BusRoute;
+  bike: BikeRoute;
+  riskLevel: "safe" | "caution" | "danger";
+  liveEta: BusEtaResult | null;
+}) {
+  const [state, setState] = useState<CoachState>({ status: "idle" });
+
+  const handleClick = useCallback(async () => {
+    setState({ status: "loading" });
+    try {
+      const now = new Date();
+      const currentTime = now.toLocaleTimeString("ko-KR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+        timeZone: "Asia/Seoul",
+      });
+
+      const body: CoachInput = {
+        originName: origin.name,
+        destinationName: destination.name,
+        bus: {
+          totalDurationSec: bus.totalDurationSec,
+          walkDurationSec: bus.walkDurationSec,
+          transferCount: bus.transferCount,
+          isServiceEnded: bus.isServiceEnded,
+        },
+        bike: {
+          totalDurationSec: bike.totalDurationSec,
+          rideDistanceMeters: bike.rideDistanceMeters,
+          walkDurationSec: bike.walkDurationSec,
+          fromStationBikesAvailable: bike.fromStationBikesAvailable,
+          isAvailable: bike.isAvailable,
+        },
+        riskLevel,
+        currentTime,
+        liveEtaSec: liveEta?.etaSec,
+        liveEtaRouteName: liveEta?.routeName,
+      };
+
+      const res = await fetch("/api/ai/coach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const data = (await res.json()) as { coaching: string };
+      setState({ status: "done", text: data.coaching });
+    } catch {
+      setState({ status: "error" });
+    }
+  }, [origin, destination, bus, bike, riskLevel, liveEta]);
+
+  return (
+    <div className="mt-3">
+      {state.status === "idle" && (
+        <button
+          type="button"
+          onClick={() => void handleClick()}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[color:var(--border)] bg-[color:var(--muted)]/40 px-4 py-3 text-sm transition-colors hover:bg-[color:var(--muted)]/70"
+        >
+          <span className="text-base" aria-hidden>
+            &#x2728;
+          </span>
+          <span className="font-medium">AI 귀가 코칭 받기</span>
+        </button>
+      )}
+
+      {state.status === "loading" && (
+        <div className="flex items-center justify-center gap-2 rounded-2xl border border-[color:var(--border)] bg-[color:var(--muted)]/40 px-4 py-3 text-sm">
+          <span
+            className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-[color:var(--border)] border-t-[color:var(--foreground)]"
+            aria-hidden
+          />
+          <span className="text-[color:var(--muted-foreground)]">
+            AI가 경로를 분석하고 있어요...
+          </span>
+        </div>
+      )}
+
+      {state.status === "done" && (
+        <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--muted)]/40 p-4">
+          <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-[color:var(--muted-foreground)]">
+            <span aria-hidden>&#x2728;</span>
+            AI 귀가 코칭
+          </div>
+          <p className="text-sm leading-relaxed">{state.text}</p>
+          <button
+            type="button"
+            onClick={() => void handleClick()}
+            className="mt-2 text-xs text-[color:var(--muted-foreground)] underline decoration-dotted"
+          >
+            다시 분석
+          </button>
+        </div>
+      )}
+
+      {state.status === "error" && (
+        <div className="flex items-center justify-between rounded-2xl border border-[color:var(--danger)]/50 bg-[color:var(--danger)]/10 px-4 py-3 text-sm">
+          <span className="text-[color:var(--danger)]">
+            AI 코칭을 불러오지 못했습니다.
+          </span>
+          <button
+            type="button"
+            onClick={() => void handleClick()}
+            className="rounded-full bg-[color:var(--foreground)] px-3 py-1 text-xs font-semibold text-[color:var(--background)]"
+          >
+            재시도
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── 에러 카드 ─────────────────────────────────────── */
 
 type ErrorKindType = "network" | "server" | "no_route" | "unknown";
 
