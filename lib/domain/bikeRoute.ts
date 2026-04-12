@@ -32,11 +32,24 @@ export function findNearestStationWithBikes(
   return best;
 }
 
+/** OSRM 등 외부 라우팅 결과를 주입할 때 사용 */
+export type RoadRouteSegment = {
+  polyline: Coord[];
+  distanceMeters: number;
+  durationSec: number;
+};
+
 export type BuildBikeRouteInput = {
   origin: Coord;
   destination: Coord;
   stations: BikeStation[];
   radiusM?: number;
+  /** 도보(출발→대여) 실제 도로 경로 */
+  walkToPickup?: RoadRouteSegment | null;
+  /** 자전거(대여→반납) 실제 도로 경로 */
+  rideRoute?: RoadRouteSegment | null;
+  /** 도보(반납→목적지) 실제 도로 경로 */
+  walkFromDropoff?: RoadRouteSegment | null;
 };
 
 /**
@@ -63,17 +76,21 @@ export function buildBikeRoute(input: BuildBikeRouteInput): BikeRoute {
   const pickupCoord = { lat: pickup.station.lat, lng: pickup.station.lng };
   const dropoffCoord = { lat: dropoff.station.lat, lng: dropoff.station.lng };
 
-  const walkToPickupSec = walkSeconds(pickup.distanceM);
-  const walkFromDropoffSec = walkSeconds(dropoff.distanceM);
-  const rideDistanceMeters = haversineMeters(pickupCoord, dropoffCoord);
-  const rideDurationSec = bikeSeconds(rideDistanceMeters);
+  // OSRM 결과가 있으면 사용, 없으면 직선 거리 폴백
+  const walkToPickupDist = input.walkToPickup?.distanceMeters ?? pickup.distanceM;
+  const walkToPickupSec = input.walkToPickup?.durationSec ?? walkSeconds(pickup.distanceM);
+  const walkFromDropoffDist = input.walkFromDropoff?.distanceMeters ?? dropoff.distanceM;
+  const walkFromDropoffSec = input.walkFromDropoff?.durationSec ?? walkSeconds(dropoff.distanceM);
+
+  const rideDistanceMeters = input.rideRoute?.distanceMeters ?? haversineMeters(pickupCoord, dropoffCoord);
+  const rideDurationSec = input.rideRoute?.durationSec ?? bikeSeconds(haversineMeters(pickupCoord, dropoffCoord));
 
   const legs: RouteLeg[] = [
     {
       kind: "walk",
       fromName: "현재 위치",
       toName: pickup.station.name,
-      distanceMeters: pickup.distanceM,
+      distanceMeters: walkToPickupDist,
       durationSec: walkToPickupSec,
     },
     {
@@ -87,10 +104,21 @@ export function buildBikeRoute(input: BuildBikeRouteInput): BikeRoute {
       kind: "walk",
       fromName: dropoff.station.name,
       toName: "목적지",
-      distanceMeters: dropoff.distanceM,
+      distanceMeters: walkFromDropoffDist,
       durationSec: walkFromDropoffSec,
     },
   ];
+
+  // 폴리라인: OSRM 경로가 있으면 도로 기반, 없으면 4점 직선
+  const polyline: Coord[] = buildPolyline(
+    input.origin,
+    pickupCoord,
+    dropoffCoord,
+    input.destination,
+    input.walkToPickup?.polyline,
+    input.rideRoute?.polyline,
+    input.walkFromDropoff?.polyline,
+  );
 
   return {
     mode: "bike",
@@ -105,7 +133,7 @@ export function buildBikeRoute(input: BuildBikeRouteInput): BikeRoute {
     toStationName: dropoff.station.name,
     toStationDocksAvailable: dropoff.station.docksAvailable ?? 0,
     isAvailable: true,
-    polyline: [input.origin, pickupCoord, dropoffCoord, input.destination],
+    polyline,
     legs,
   };
 }
@@ -130,6 +158,27 @@ function unavailableRoute(
     polyline: [],
     legs: [],
   };
+}
+
+function buildPolyline(
+  origin: Coord,
+  pickup: Coord,
+  dropoff: Coord,
+  destination: Coord,
+  walkToPickupPoly?: Coord[],
+  ridePoly?: Coord[],
+  walkFromDropoffPoly?: Coord[],
+): Coord[] {
+  // OSRM 경로가 하나라도 있으면 도로 기반 폴리라인 구성
+  if (walkToPickupPoly || ridePoly || walkFromDropoffPoly) {
+    return [
+      ...(walkToPickupPoly ?? [origin, pickup]),
+      ...(ridePoly ?? [pickup, dropoff]),
+      ...(walkFromDropoffPoly ?? [dropoff, destination]),
+    ];
+  }
+  // 전부 없으면 기존 4점 직선
+  return [origin, pickup, dropoff, destination];
 }
 
 // re-export for convenience in tests / routes

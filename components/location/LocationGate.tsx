@@ -6,6 +6,7 @@ import {
   useTripStore,
   type LocationStatus,
 } from "@/lib/store/useTripStore";
+import { SEOUL_CITY_HALL } from "@/lib/config";
 
 const ACCURACY_THRESHOLD_M = 100;
 
@@ -23,11 +24,20 @@ export function LocationGate() {
   useEffect(() => {
     if (origin || locationStatus.kind !== "idle") return;
 
-    if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
-      setLocationStatus({
-        kind: "unavailable",
-        reason: "브라우저가 위치 API를 지원하지 않습니다.",
+    const fallbackToDefault = (reason: string, kind: "denied" | "unavailable") => {
+      setOrigin({
+        id: "default",
+        name: "서울시청",
+        coord: SEOUL_CITY_HALL,
       });
+      setLocationStatus({ kind, reason });
+    };
+
+    if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
+      fallbackToDefault(
+        "브라우저가 위치 API를 지원하지 않습니다.",
+        "unavailable",
+      );
       return;
     }
 
@@ -41,10 +51,7 @@ export function LocationGate() {
         });
       },
       (err) => {
-        setLocationStatus({
-          kind: "denied",
-          reason: err.message,
-        });
+        fallbackToDefault(err.message, "denied");
       },
       {
         enableHighAccuracy: true,

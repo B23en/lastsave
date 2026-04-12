@@ -139,7 +139,7 @@ describe("GET /api/route/compare", () => {
     expect(body.bike.isAvailable).toBe(true);
     expect(body.bike.fromStationId).toBeTypeOf("string");
     expect(body.bike.toStationId).toBeTypeOf("string");
-    expect(body.bike.polyline.length).toBe(4);
+    expect(body.bike.polyline.length).toBeGreaterThanOrEqual(4);
   });
 });
 

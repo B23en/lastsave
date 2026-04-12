@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { fetchBikeStations, normalizeStations } from "@/lib/api/pbdo";
 import { searchPubTransPath } from "@/lib/api/odsay";
-import { buildBikeRoute } from "@/lib/domain/bikeRoute";
+import { fetchOsrmRoute } from "@/lib/api/osrm";
+import {
+  buildBikeRoute,
+  findNearestStationWithBikes,
+  BIKE_STATION_SEARCH_RADIUS_M,
+} from "@/lib/domain/bikeRoute";
 import { mapOdsayToBusRoute } from "@/lib/domain/odsayMapper";
 import type { BikeRoute, BusRoute } from "@/types/trip";
 
@@ -54,10 +59,49 @@ export async function GET(req: Request) {
       } satisfies BusRoute);
 
     const stations = normalizeStations(bikeRawResponse);
+    const originCoord = { lat: startY!, lng: startX! };
+    const destCoord = { lat: endY!, lng: endX! };
+    const radiusM = BIKE_STATION_SEARCH_RADIUS_M;
+
+    // 거치대를 먼저 찾아서 OSRM 경로 조회에 사용
+    const pickup = findNearestStationWithBikes(originCoord, stations, {
+      radiusM,
+      requireBikes: true,
+    });
+    const dropoff = findNearestStationWithBikes(destCoord, stations, {
+      radiusM,
+      requireBikes: false,
+    });
+
+    // 거치대가 있으면 OSRM으로 실제 도로 경로 조회 (병렬)
+    const [walkToPickup, rideRoute, walkFromDropoff] =
+      pickup && dropoff
+        ? await Promise.all([
+            fetchOsrmRoute(
+              originCoord,
+              { lat: pickup.station.lat, lng: pickup.station.lng },
+              "foot",
+            ),
+            fetchOsrmRoute(
+              { lat: pickup.station.lat, lng: pickup.station.lng },
+              { lat: dropoff.station.lat, lng: dropoff.station.lng },
+              "bike",
+            ),
+            fetchOsrmRoute(
+              { lat: dropoff.station.lat, lng: dropoff.station.lng },
+              destCoord,
+              "foot",
+            ),
+          ])
+        : [null, null, null];
+
     const bike = buildBikeRoute({
-      origin: { lat: startY!, lng: startX! },
-      destination: { lat: endY!, lng: endX! },
+      origin: originCoord,
+      destination: destCoord,
       stations,
+      walkToPickup,
+      rideRoute,
+      walkFromDropoff,
     });
 
     const body: CompareResponse = { bus, bike };

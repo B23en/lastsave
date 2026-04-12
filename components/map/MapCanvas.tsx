@@ -66,7 +66,9 @@ export function MapCanvas({
     if (compare.status !== "success" || !compare.data.bike.isAvailable) {
       return [];
     }
-    return interpolateBikePolyline(compare.data.bike.polyline);
+    const poly = compare.data.bike.polyline;
+    // OSRM 도로 경로(5+ 좌표)는 그대로, 4점 직선일 때만 interpolation
+    return poly.length > 4 ? poly : interpolateBikePolyline(poly);
   }, [compare]);
   const bikeStations =
     compare.status === "success" && compare.data.bike.isAvailable
