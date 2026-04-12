@@ -59,15 +59,47 @@ export function LocationGate() {
 
 export function LocationStatusBadge() {
   const status = useTripStore((s) => s.locationStatus);
+  const origin = useTripStore((s) => s.origin);
+  const setOrigin = useTripStore((s) => s.setOrigin);
   const setPickMode = useTripStore((s) => s.setPickMode);
+  const setLocationStatus = useTripStore((s) => s.setLocationStatus);
   const pickMode = useTripStore((s) => s.pickMode);
 
   const copy = describeStatus(status);
   if (!copy) return null;
 
+  const isPickingOrigin = pickMode === "origin";
+
+  const handlePickToggle = () => {
+    setPickMode(isPickingOrigin ? "none" : "origin");
+  };
+
+  const handleResetToGps = () => {
+    if (typeof navigator === "undefined" || !("geolocation" in navigator)) return;
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setOrigin(positionToPlace(position));
+        setLocationStatus({
+          kind: "granted",
+          accuracyMeters: position.coords.accuracy,
+        });
+        setPickMode("none");
+      },
+      () => {},
+      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 0 },
+    );
+  };
+
+  const showPickButton =
+    status.kind === "denied" ||
+    status.kind === "unavailable" ||
+    status.kind === "granted";
+
+  const isManualOrigin = origin?.id === "map-pick";
+
   return (
     <div
-      className="pointer-events-auto flex items-center gap-3 rounded-full border border-[color:var(--border)] bg-[color:var(--background)]/90 px-4 py-2 text-sm shadow-sm backdrop-blur"
+      className="pointer-events-auto flex flex-wrap items-center gap-2 rounded-full border border-[color:var(--border)] bg-[color:var(--background)]/90 px-4 py-2 text-sm shadow-sm backdrop-blur"
       role="status"
     >
       <span
@@ -75,17 +107,24 @@ export function LocationStatusBadge() {
         style={{ background: copy.color }}
       />
       <span className="text-[color:var(--muted-foreground)]">{copy.text}</span>
-      {status.kind === "denied" || status.kind === "unavailable" ? (
+      {showPickButton && (
         <button
           type="button"
-          onClick={() =>
-            setPickMode(pickMode === "origin" ? "none" : "origin")
-          }
+          onClick={handlePickToggle}
           className="rounded-full bg-[color:var(--foreground)] px-3 py-1 text-xs font-semibold text-[color:var(--background)]"
         >
-          {pickMode === "origin" ? "취소" : "지도에서 출발지 선택"}
+          {isPickingOrigin ? "취소" : "출발지 변경"}
         </button>
-      ) : null}
+      )}
+      {isManualOrigin && status.kind === "granted" && (
+        <button
+          type="button"
+          onClick={handleResetToGps}
+          className="rounded-full border border-[color:var(--border)] px-3 py-1 text-xs text-[color:var(--muted-foreground)]"
+        >
+          현재 위치로 복원
+        </button>
+      )}
     </div>
   );
 }
