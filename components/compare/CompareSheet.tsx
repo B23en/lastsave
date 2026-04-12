@@ -90,6 +90,7 @@ export function CompareSheet() {
         )}
         {compare.status === "error" && (
           <ErrorCard
+            kind={compare.kind}
             message={compare.message}
             onRetry={() => void runCompare()}
           />
@@ -200,6 +201,7 @@ function BusCard({
     >
       <CardHeader mode="bus" label="버스" recommended={recommended} />
       <BigDuration sec={route.totalDurationSec} />
+      <RouteNames legs={route.legs} />
       <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-[color:var(--muted-foreground)]">
         <dt>도보</dt>
         <dd className="text-right">
@@ -325,6 +327,41 @@ function CardHeader({
   );
 }
 
+function RouteNames({
+  legs,
+}: {
+  legs: { kind: string; routeName?: string; fromName?: string; toName?: string }[];
+}) {
+  const transitLegs = legs.filter(
+    (l) => (l.kind === "bus" || l.kind === "subway") && l.routeName,
+  );
+  if (transitLegs.length === 0) return null;
+
+  const icons: Record<string, string> = { bus: "🚌", subway: "🚇" };
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-1 text-xs text-[color:var(--muted-foreground)]">
+      {transitLegs.map((l, i) => (
+        <span key={i} className="inline-flex items-center gap-0.5">
+          {i > 0 && <span className="mx-0.5">→</span>}
+          <span>{icons[l.kind] ?? "🚏"}</span>
+          <span className="font-semibold text-[color:var(--foreground)]">
+            {l.routeName}
+          </span>
+        </span>
+      ))}
+      {transitLegs.length > 0 && transitLegs[0]?.fromName && (
+        <span className="ml-1 truncate">
+          ({transitLegs[0].fromName}
+          {transitLegs.at(-1)?.toName
+            ? ` → ${transitLegs.at(-1)!.toName}`
+            : ""}
+          )
+        </span>
+      )}
+    </div>
+  );
+}
+
 function BigDuration({ sec }: { sec: number }) {
   const min = Math.round(sec / 60);
   return (
@@ -335,21 +372,58 @@ function BigDuration({ sec }: { sec: number }) {
   );
 }
 
+type ErrorKindType = "network" | "server" | "no_route" | "unknown";
+
+const ERROR_COPY: Record<
+  ErrorKindType,
+  { icon: string; title: string; hint: string }
+> = {
+  network: {
+    icon: "📡",
+    title: "네트워크 연결 오류",
+    hint: "인터넷 연결을 확인하고 다시 시도해주세요.",
+  },
+  server: {
+    icon: "🔧",
+    title: "서버 일시 장애",
+    hint: "공공데이터 서버가 응답하지 않습니다. 잠시 후 다시 시도해주세요.",
+  },
+  no_route: {
+    icon: "🗺️",
+    title: "경로를 찾을 수 없음",
+    hint: "출발지와 목적지 사이의 대중교통 경로가 없습니다. 다른 목적지를 선택해보세요.",
+  },
+  unknown: {
+    icon: "⚠️",
+    title: "경로를 불러오지 못했습니다",
+    hint: "잠시 후 다시 시도해주세요.",
+  },
+};
+
 function ErrorCard({
+  kind,
   message,
   onRetry,
 }: {
+  kind: ErrorKindType;
   message: string;
   onRetry: () => void;
 }) {
+  const copy = ERROR_COPY[kind];
   return (
     <div className="rounded-2xl border border-[color:var(--danger)]/50 bg-[color:var(--danger)]/10 p-4 text-sm">
-      <p className="font-medium text-[color:var(--danger)]">
-        경로를 불러오지 못했습니다
+      <p className="flex items-center gap-2 font-medium text-[color:var(--danger)]">
+        <span aria-hidden>{copy.icon}</span>
+        {copy.title}
       </p>
       <p className="mt-1 text-xs text-[color:var(--muted-foreground)]">
-        {message}
+        {copy.hint}
       </p>
+      {process.env.NODE_ENV === "development" && (
+        <p className="mt-1 text-[10px] text-[color:var(--muted-foreground)]/70">
+          {message}
+        </p>
+      )}
       <button
         type="button"
         onClick={onRetry}

@@ -7,6 +7,7 @@ import { SearchBar } from "@/components/search/SearchBar";
 import { CompareSheet } from "@/components/compare/CompareSheet";
 import { RiskBanner } from "@/components/risk/RiskBanner";
 import ThemeToggle from "@/components/theme/ClientThemeToggle";
+import { DataSourceFooter } from "@/components/DataSourceFooter";
 
 export default function Home() {
   return (
@@ -32,8 +33,9 @@ export default function Home() {
         <RiskBanner />
       </div>
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex flex-col items-center p-4 pb-6">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex flex-col items-center p-4 pb-0">
         <CompareSheet />
+        <DataSourceFooter />
       </div>
     </main>
   );

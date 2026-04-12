@@ -23,11 +23,13 @@ export type CompareData = {
   bike: BikeRoute;
 };
 
+export type ErrorKind = "network" | "server" | "no_route" | "unknown";
+
 export type CompareState =
   | { status: "idle" }
   | { status: "loading" }
   | { status: "success"; data: CompareData; fetchedAt: number }
-  | { status: "error"; message: string };
+  | { status: "error"; kind: ErrorKind; message: string };
 
 export type TripState = {
   origin: Place | null;
@@ -98,12 +100,15 @@ export const useTripStore = create<TripState>((set, get) => ({
         compare: { status: "success", data, fetchedAt: Date.now() },
       });
     } catch (err) {
-      set({
-        compare: {
-          status: "error",
-          message: err instanceof Error ? err.message : "알 수 없는 오류",
-        },
-      });
+      const message =
+        err instanceof Error ? err.message : "알 수 없는 오류";
+      const kind: ErrorKind =
+        message.includes("fetch") || message.includes("network")
+          ? "network"
+          : message.includes("502") || message.includes("500")
+            ? "server"
+            : "unknown";
+      set({ compare: { status: "error", kind, message } });
     }
   },
 
