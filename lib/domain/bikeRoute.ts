@@ -4,6 +4,9 @@ import { BIKE_SPEED_MPS, bikeSeconds, haversineMeters, walkSeconds } from "./eta
 
 export const BIKE_STATION_SEARCH_RADIUS_M = 1000;
 
+/** 자전거 정차/신호 대기 보정: 2km(2000m)당 60초 추가 */
+const BIKE_STOP_PENALTY_SEC_PER_M = 60 / 2000;
+
 export type NearestStationResult = {
   station: BikeStation;
   distanceM: number;
@@ -83,7 +86,9 @@ export function buildBikeRoute(input: BuildBikeRouteInput): BikeRoute {
   const walkFromDropoffSec = input.walkFromDropoff?.durationSec ?? walkSeconds(dropoff.distanceM);
 
   const rideDistanceMeters = input.rideRoute?.distanceMeters ?? haversineMeters(pickupCoord, dropoffCoord);
-  const rideDurationSec = input.rideRoute?.durationSec ?? bikeSeconds(haversineMeters(pickupCoord, dropoffCoord));
+  const rideBaseSec = input.rideRoute?.durationSec ?? bikeSeconds(haversineMeters(pickupCoord, dropoffCoord));
+  const stopPenaltySec = Math.round(rideDistanceMeters * BIKE_STOP_PENALTY_SEC_PER_M);
+  const rideDurationSec = rideBaseSec + stopPenaltySec;
 
   const legs: RouteLeg[] = [
     {

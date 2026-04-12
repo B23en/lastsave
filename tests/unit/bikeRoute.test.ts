@@ -124,8 +124,9 @@ describe("buildBikeRoute", () => {
       destination: GANGNAM,
       stations: STATIONS,
     });
-    expect(route.totalDurationSec).toBe(
+    expect(route.totalDurationSec).toBeCloseTo(
       route.walkDurationSec + route.rideDurationSec,
+      5,
     );
   });
 

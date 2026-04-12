@@ -416,6 +416,7 @@ function BigDuration({ sec }: { sec: number }) {
   const min = Math.round(sec / 60);
   return (
     <div className="mt-3 flex items-baseline gap-2">
+      <span className="text-sm text-[color:var(--muted-foreground)]">약</span>
       <span className="text-3xl font-bold">{min}</span>
       <span className="text-sm text-[color:var(--muted-foreground)]">분</span>
     </div>

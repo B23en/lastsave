@@ -173,6 +173,7 @@ export function MapCanvas({
         <MapMarker
           position={origin.coord}
           title={origin.name}
+          zIndex={10}
           image={{
             src:
               "data:image/svg+xml;utf8," +
@@ -242,9 +243,26 @@ export function MapCanvas({
             src:
               "data:image/svg+xml;utf8," +
               encodeURIComponent(
-                `<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26"><rect x="3" y="3" width="20" height="20" rx="6" fill="#22c55e" stroke="white" stroke-width="2"/></svg>`,
+                s.role === "pickup"
+                  ? [
+                      `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="50" viewBox="0 0 40 50">`,
+                      `<rect x="2" y="2" width="36" height="36" rx="10" fill="#22c55e" stroke="white" stroke-width="3"/>`,
+                      `<text x="20" y="28" text-anchor="middle" font-size="18">🚲</text>`,
+                      `<rect x="4" y="38" width="32" height="12" rx="6" fill="#22c55e"/>`,
+                      `<text x="20" y="48" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" font-weight="700" fill="white">${s.bikes}대</text>`,
+                      `</svg>`,
+                    ].join("")
+                  : [
+                      `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="50" viewBox="0 0 40 50">`,
+                      `<rect x="2" y="2" width="36" height="36" rx="10" fill="#16a34a" stroke="white" stroke-width="3"/>`,
+                      `<text x="20" y="28" text-anchor="middle" font-size="18">🅿</text>`,
+                      `<rect x="4" y="38" width="32" height="12" rx="6" fill="#16a34a"/>`,
+                      `<text x="20" y="48" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" font-weight="700" fill="white">반납</text>`,
+                      `</svg>`,
+                    ].join(""),
               ),
-            size: { width: 26, height: 26 },
+            size: { width: 40, height: 50 },
+            options: { offset: { x: 20, y: 50 } },
           }}
         />
       ))}
