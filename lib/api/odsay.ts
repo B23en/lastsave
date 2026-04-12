@@ -44,11 +44,20 @@ export async function searchPubTransPath(
     url.searchParams.set("SearchPathType", String(searchType));
 
     try {
-      const res = await fetchWithTimeout(url);
+      const res = await fetchWithTimeout(url, {
+        headers: {
+          // ODsay URI 플랫폼 인증: Referer 헤더로 등록 도메인 검증
+          Referer: process.env.ODSAY_REFERER ?? "http://localhost:3000/",
+        },
+      });
       if (!res.ok) {
         throw new Error(`ODsay fetch failed: ${res.status}`);
       }
-      return (await res.json()) as OdsayPubTransResponse;
+      const data = (await res.json()) as OdsayPubTransResponse;
+      if (data.error) {
+        throw new Error(`ODsay API error: ${data.error.msg}`);
+      }
+      return data;
     } catch (err) {
       markUpstreamFailure("odsay");
       console.warn(
