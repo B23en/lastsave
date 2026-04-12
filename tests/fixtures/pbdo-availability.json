@@ -4,55 +4,30 @@
     "resultMsg": "NORMAL_SERVICE"
   },
   "body": {
-    "totalCount": "5",
+    "totalCount": "20",
     "pageNo": "1",
-    "numOfRows": "5",
+    "numOfRows": "20",
     "item": [
-      {
-        "rntstnId": "SEL-00101",
-        "rntstnNm": "시청역 1번 출구",
-        "lcgvmnInstCd": "1100000000",
-        "lcgvmnInstNm": "서울특별시",
-        "lat": "37.5648",
-        "lot": "126.9768",
-        "bcyclTpkctNocs": "12"
-      },
-      {
-        "rntstnId": "SEL-00102",
-        "rntstnNm": "시청역 3번 출구",
-        "lcgvmnInstCd": "1100000000",
-        "lcgvmnInstNm": "서울특별시",
-        "lat": "37.5657",
-        "lot": "126.9775",
-        "bcyclTpkctNocs": "4"
-      },
-      {
-        "rntstnId": "SEL-00103",
-        "rntstnNm": "덕수궁 대한문 앞",
-        "lcgvmnInstCd": "1100000000",
-        "lcgvmnInstNm": "서울특별시",
-        "lat": "37.5661",
-        "lot": "126.9754",
-        "bcyclTpkctNocs": "0"
-      },
-      {
-        "rntstnId": "SEL-00201",
-        "rntstnNm": "광화문역 7번 출구",
-        "lcgvmnInstCd": "1100000000",
-        "lcgvmnInstNm": "서울특별시",
-        "lat": "37.5715",
-        "lot": "126.9766",
-        "bcyclTpkctNocs": "18"
-      },
-      {
-        "rntstnId": "SEL-00501",
-        "rntstnNm": "강남역 5번 출구",
-        "lcgvmnInstCd": "1100000000",
-        "lcgvmnInstNm": "서울특별시",
-        "lat": "37.4982",
-        "lot": "127.0281",
-        "bcyclTpkctNocs": "15"
-      }
+      { "rntstnId": "SEL-0101", "rntstnNm": "시청역 1번 출구", "lcgvmnInstCd": "1100000000", "lcgvmnInstNm": "서울특별시", "lat": "37.5648", "lot": "126.9768", "bcyclTpkctNocs": "12" },
+      { "rntstnId": "SEL-0102", "rntstnNm": "광화문역 7번 출구", "lcgvmnInstCd": "1100000000", "lcgvmnInstNm": "서울특별시", "lat": "37.5715", "lot": "126.9766", "bcyclTpkctNocs": "18" },
+      { "rntstnId": "SEL-0201", "rntstnNm": "강남역 5번 출구", "lcgvmnInstCd": "1100000000", "lcgvmnInstNm": "서울특별시", "lat": "37.4982", "lot": "127.0281", "bcyclTpkctNocs": "15" },
+      { "rntstnId": "SEL-0202", "rntstnNm": "역삼역 3번 출구", "lcgvmnInstCd": "1100000000", "lcgvmnInstNm": "서울특별시", "lat": "37.5007", "lot": "127.0365", "bcyclTpkctNocs": "9" },
+      { "rntstnId": "SEL-0301", "rntstnNm": "홍대입구역 9번 출구", "lcgvmnInstCd": "1100000000", "lcgvmnInstNm": "서울특별시", "lat": "37.5572", "lot": "126.9244", "bcyclTpkctNocs": "7" },
+      { "rntstnId": "SEL-0302", "rntstnNm": "합정역 5번 출구", "lcgvmnInstCd": "1100000000", "lcgvmnInstNm": "서울특별시", "lat": "37.5496", "lot": "126.9136", "bcyclTpkctNocs": "11" },
+      { "rntstnId": "SEL-0401", "rntstnNm": "잠실역 4번 출구", "lcgvmnInstCd": "1100000000", "lcgvmnInstNm": "서울특별시", "lat": "37.5133", "lot": "127.1001", "bcyclTpkctNocs": "14" },
+      { "rntstnId": "SEL-0402", "rntstnNm": "송파나루역 2번 출구", "lcgvmnInstCd": "1100000000", "lcgvmnInstNm": "서울특별시", "lat": "37.5112", "lot": "127.1074", "bcyclTpkctNocs": "6" },
+      { "rntstnId": "SEL-0501", "rntstnNm": "신촌역 2번 출구", "lcgvmnInstCd": "1100000000", "lcgvmnInstNm": "서울특별시", "lat": "37.5550", "lot": "126.9369", "bcyclTpkctNocs": "10" },
+      { "rntstnId": "SEL-0502", "rntstnNm": "이대역 3번 출구", "lcgvmnInstCd": "1100000000", "lcgvmnInstNm": "서울특별시", "lat": "37.5570", "lot": "126.9461", "bcyclTpkctNocs": "5" },
+      { "rntstnId": "SEL-0601", "rntstnNm": "건대입구역 1번 출구", "lcgvmnInstCd": "1100000000", "lcgvmnInstNm": "서울특별시", "lat": "37.5404", "lot": "127.0695", "bcyclTpkctNocs": "8" },
+      { "rntstnId": "SEL-0602", "rntstnNm": "성수역 2번 출구", "lcgvmnInstCd": "1100000000", "lcgvmnInstNm": "서울특별시", "lat": "37.5445", "lot": "127.0558", "bcyclTpkctNocs": "13" },
+      { "rntstnId": "SEL-0701", "rntstnNm": "여의도역 5번 출구", "lcgvmnInstCd": "1100000000", "lcgvmnInstNm": "서울특별시", "lat": "37.5216", "lot": "126.9244", "bcyclTpkctNocs": "16" },
+      { "rntstnId": "SEL-0702", "rntstnNm": "영등포역 3번 출구", "lcgvmnInstCd": "1100000000", "lcgvmnInstNm": "서울특별시", "lat": "37.5159", "lot": "126.9076", "bcyclTpkctNocs": "7" },
+      { "rntstnId": "SEL-0801", "rntstnNm": "서울대입구역 2번 출구", "lcgvmnInstCd": "1100000000", "lcgvmnInstNm": "서울특별시", "lat": "37.4816", "lot": "126.9529", "bcyclTpkctNocs": "11" },
+      { "rntstnId": "SEL-0802", "rntstnNm": "낙성대역 4번 출구", "lcgvmnInstCd": "1100000000", "lcgvmnInstNm": "서울특별시", "lat": "37.4768", "lot": "126.9636", "bcyclTpkctNocs": "4" },
+      { "rntstnId": "SEL-0901", "rntstnNm": "왕십리역 6번 출구", "lcgvmnInstCd": "1100000000", "lcgvmnInstNm": "서울특별시", "lat": "37.5610", "lot": "127.0380", "bcyclTpkctNocs": "9" },
+      { "rntstnId": "SEL-0902", "rntstnNm": "용두역 2번 출구", "lcgvmnInstCd": "1100000000", "lcgvmnInstNm": "서울특별시", "lat": "37.5741", "lot": "127.0319", "bcyclTpkctNocs": "5" },
+      { "rntstnId": "SEL-1001", "rntstnNm": "노원역 1번 출구", "lcgvmnInstCd": "1100000000", "lcgvmnInstNm": "서울특별시", "lat": "37.6553", "lot": "127.0613", "bcyclTpkctNocs": "10" },
+      { "rntstnId": "SEL-1002", "rntstnNm": "수유역 3번 출구", "lcgvmnInstCd": "1100000000", "lcgvmnInstNm": "서울특별시", "lat": "37.6383", "lot": "127.0254", "bcyclTpkctNocs": "8" }
     ]
   }
 }

@@ -2,7 +2,7 @@ import type { BikeStation } from "@/types/pbdo";
 import type { BikeRoute, Coord, RouteLeg } from "@/types/trip";
 import { BIKE_SPEED_MPS, bikeSeconds, haversineMeters, walkSeconds } from "./eta";
 
-export const BIKE_STATION_SEARCH_RADIUS_M = 500;
+export const BIKE_STATION_SEARCH_RADIUS_M = 1000;
 
 export type NearestStationResult = {
   station: BikeStation;
