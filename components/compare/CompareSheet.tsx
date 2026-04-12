@@ -84,9 +84,12 @@ export function CompareSheet() {
         onClick={toggleSheet}
         aria-expanded={!sheetCollapsed}
         aria-label={sheetCollapsed ? "시트 펼치기" : "시트 접기"}
-        className="flex w-full items-center justify-center py-2"
+        className="flex w-full flex-col items-center gap-1 py-3 transition-colors hover:bg-[color:var(--muted)]/30"
       >
-        <span className="h-1.5 w-10 rounded-full bg-[color:var(--border)]" />
+        <span className="h-1.5 w-12 rounded-full bg-[color:var(--muted-foreground)]/40" />
+        <span className="text-[11px] text-[color:var(--muted-foreground)]">
+          {sheetCollapsed ? "▲ 펼치기" : "▼ 접기"}
+        </span>
       </button>
 
       <div className={sheetCollapsed ? "hidden" : "px-4 pb-4"}>
