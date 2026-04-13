@@ -15,7 +15,8 @@ import {
 
 const PBDO_BASE = "https://apis.data.go.kr/B551982/pbdo_v2";
 const CACHE_TTL_MS = 15_000;
-const DEFAULT_PAGE_SIZE = 500;
+const DEFAULT_PAGE_SIZE = 1000;
+const MAX_PAGES = 6;
 
 const serviceKey = () => process.env.PUBLIC_BIKE_SERVICE_KEY ?? "";
 
@@ -39,24 +40,41 @@ export async function fetchBikeStations(
       return loadPbdoAvailabilityFixture();
     }
 
-    const url = new URL(`${PBDO_BASE}/inf_101_00010002_v2`);
-    url.searchParams.set("serviceKey", serviceKey());
-    url.searchParams.set(
-      "numOfRows",
-      String(params.numOfRows ?? DEFAULT_PAGE_SIZE),
-    );
-    url.searchParams.set("pageNo", "1");
-    url.searchParams.set("type", "JSON");
-    if (params.lcgvmnInstCd) {
-      url.searchParams.set("lcgvmnInstCd", params.lcgvmnInstCd);
-    }
-
     try {
-      const res = await fetchWithTimeout(url);
-      if (!res.ok) {
-        throw new Error(`PBDO fetch failed: ${res.status}`);
+      const pageSize = params.numOfRows ?? DEFAULT_PAGE_SIZE;
+      const allItems: PbdoStationAvailabilityItem[] = [];
+      let totalCount = 0;
+
+      for (let page = 1; page <= MAX_PAGES; page++) {
+        const url = new URL(`${PBDO_BASE}/inf_101_00010002_v2`);
+        url.searchParams.set("serviceKey", serviceKey());
+        url.searchParams.set("numOfRows", String(pageSize));
+        url.searchParams.set("pageNo", String(page));
+        url.searchParams.set("type", "JSON");
+
+        const res = await fetchWithTimeout(url, { timeoutMs: 5000 });
+        if (!res.ok) {
+          throw new Error(`PBDO fetch failed: ${res.status}`);
+        }
+        const data = (await res.json()) as PbdoStationAvailabilityResponse;
+        if (page === 1) totalCount = Number(data.body?.totalCount ?? 0);
+
+        const items = data.body?.item ?? [];
+        if (items.length === 0) break;
+        allItems.push(...items);
+
+        if (allItems.length >= totalCount) break;
       }
-      return (await res.json()) as PbdoStationAvailabilityResponse;
+
+      return {
+        header: { resultCode: "K0", resultMsg: "NORMAL_SERVICE" },
+        body: {
+          totalCount: String(totalCount),
+          pageNo: "1",
+          numOfRows: String(allItems.length),
+          item: allItems,
+        },
+      };
     } catch (err) {
       markUpstreamFailure("pbdo");
       console.warn(

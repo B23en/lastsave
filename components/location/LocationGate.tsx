@@ -144,18 +144,11 @@ function describeStatus(
       return null;
     case "prompting":
       return { text: "위치 권한 요청 중…", color: "var(--warning)" };
-    case "granted": {
-      if (status.accuracyMeters > ACCURACY_THRESHOLD_M) {
-        return {
-          text: `위치 정확도 낮음 (±${Math.round(status.accuracyMeters)}m)`,
-          color: "var(--warning)",
-        };
-      }
+    case "granted":
       return {
-        text: `현재 위치 사용 중 (±${Math.round(status.accuracyMeters)}m)`,
+        text: "현재 위치 사용 중",
         color: "var(--safe)",
       };
-    }
     case "denied":
       return {
         text: "위치 권한 거부됨",

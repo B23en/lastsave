@@ -57,7 +57,12 @@ export async function fetchBusLocations(
       if (!res.ok) {
         throw new Error(`realtime-bus fetch failed: ${res.status}`);
       }
-      return (await res.json()) as RealtimeBusLocationResponse;
+      const data = (await res.json()) as RealtimeBusLocationResponse;
+      // K3(데이터 없음) — 해당 지역에 실시간 데이터가 없으면 fixture 폴백
+      if (data.header?.resultCode === "K3") {
+        return loadRealtimeBusLocationsFixture();
+      }
+      return data;
     } catch (err) {
       markUpstreamFailure("realtime-bus");
       console.warn(
