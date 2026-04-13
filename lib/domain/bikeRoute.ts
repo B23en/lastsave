@@ -4,8 +4,8 @@ import { BIKE_SPEED_MPS, bikeSeconds, haversineMeters, walkSeconds } from "./eta
 
 export const BIKE_STATION_SEARCH_RADIUS_M = 1000;
 
-/** 자전거 정차/신호 대기 보정: 2km(2000m)당 60초 추가 */
-const BIKE_STOP_PENALTY_SEC_PER_M = 60 / 2000;
+/** 자전거 정차/신호 대기 보정: 1km(1000m)당 60초 추가 */
+const BIKE_STOP_PENALTY_SEC_PER_M = 60 / 1000;
 
 export type NearestStationResult = {
   station: BikeStation;
